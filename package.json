@@ -1,0 +1,30 @@
+{
+  "name": "soen357-fitness-prototype",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SOEN 357 Phase 2 Task 4 - prototyping iterations (Output A, Output B, Output C).",
+  "type": "module",
+  "workspaces": [
+    "Output_A/hi-fi/app",
+    "Output_B/hi-fi/app",
+    "Output_C/prototype"
+  ],
+  "scripts": {
+    "dev:a": "npm run dev -w Output_A/hi-fi/app",
+    "dev:b": "npm run dev -w Output_B/hi-fi/app",
+    "build:a": "npm run build -w Output_A/hi-fi/app",
+    "build:b": "npm run build -w Output_B/hi-fi/app",
+    "build": "npm run build:a && npm run build:b",
+    "lofi": "node tools/lofi/build.mjs Output_A && node tools/lofi/build.mjs Output_B",
+    "screens:a": "node tools/screenshots/capture.mjs Output_A",
+    "screens:b": "node tools/screenshots/capture.mjs Output_B",
+    "lofi:png": "node tools/lofi/export-png.mjs Output_A && node tools/lofi/export-png.mjs Output_B",
+    "check:flows": "node tools/checks/flows.mjs Output_A && node tools/checks/flows.mjs Output_B",
+    "dev:c": "npm run dev -w Output_C/prototype",
+    "build:c": "npm run build -w Output_C/prototype",
+    "screens:c": "node tools/screenshots/capture.mjs Output_C"
+  },
+  "devDependencies": {
+    "playwright-core": "1.48.2"
+  }
+}

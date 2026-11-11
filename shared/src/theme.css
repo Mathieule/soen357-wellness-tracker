@@ -1,0 +1,91 @@
+/*
+ * Design tokens shared by Output A and Output B (Tailwind v4 @theme).
+ * Contrast ratios were computed with the WCAG 2.x formula; see
+ * Output_A/design-decisions.md, section "Colour".
+ *
+ *   ink  #F2F0EF on bg      #433D3D  9.37:1
+ *   ink          on raised  #5A5353  6.61:1
+ *   ink          on nav     #625A5A  5.91:1
+ *   ink          on popup   #4E4747  7.98:1
+ *   ink          on fitness #8E2B2B  7.30:1   (red   = activity)
+ *   ink          on food    #2E6B3A  5.64:1   (green = nutrition)
+ *   ink          on sleep   #2B5288  6.94:1   (blue  = sleep)
+ *   accents (charts, icons, borders; non-text >= 3:1 on bg):
+ *   #FF9E94 5.36  #7FD98A 6.18  #9CCBFF 6.28  #C9E2FF 8.01  #7FB3F0 4.87
+ *   input border #BDB5B3: 5.28 on bg, 3.73 on raised
+ */
+@theme {
+  --color-bg: #433d3d;
+  --color-ink: #f2f0ef;
+  --color-raised: #5a5353;
+  --color-nav: #625a5a;
+  --color-popup: #4e4747;
+  --color-line: #bdb5b3;
+
+  --color-fit: #8e2b2b;
+  --color-fit-accent: #ff9e94;
+  --color-food: #2e6b3a;
+  --color-food-accent: #7fd98a;
+  --color-sleep: #2b5288;
+  --color-sleep-accent: #9ccbff;
+  --color-sleep-accent-2: #c9e2ff;
+  --color-sleep-accent-3: #7fb3f0;
+
+  --font-sans: Arial, Helvetica, sans-serif;
+
+  /* AR2: nothing below 16 px. The small text sizes are clamped to 1rem. */
+  --text-xs: 1rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5;
+
+  --radius-card: 16px;
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* Visible focus indicator (off-white ring, passes 3:1 on every surface). */
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* C5: menus slide in from the left or right. Disabled for reduced motion (AR8). */
+@keyframes slide-from-right {
+  from { transform: translateX(24px); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes slide-from-left {
+  from { transform: translateX(-24px); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+.slide-from-right { animation: slide-from-right 220ms ease-out; }
+.slide-from-left { animation: slide-from-left 220ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .slide-from-right,
+  .slide-from-left { animation: none; }
+}

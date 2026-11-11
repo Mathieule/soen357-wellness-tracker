@@ -1,0 +1,111 @@
+/*
+ * Output C design tokens (Tailwind v4 @theme). Copied from the A/B theme and
+ * extended for the final visual design. Contrast (WCAG 2.x):
+ *
+ *   ink #F2F0EF on bg   #433D3D 9.37   on card  #4D4646 8.11
+ *              on card-hi #575050 6.93 on sunken #3A3434 10.74
+ *              on fitness #8E2B2B 7.30 on food #2E6B3A 5.64 on sleep #2B5288 6.94
+ *              on category tints (accent 18 % over card) 5.70–5.95
+ *   accents (icons / chart marks only, never text):
+ *     #FF9E94 #7FD98A #9CCBFF: 4.64–5.44 on card, 3.40–3.83 on their tint (non-text >= 3:1)
+ *   field border #BDB5B3: 5.28 on bg
+ */
+@theme {
+  --color-bg: #433d3d;
+  --color-ink: #f2f0ef;
+  --color-raised: #5a5353;
+  --color-nav: #625a5a;
+  --color-popup: #4e4747;
+  --color-line: #bdb5b3;
+
+  /* C surfaces */
+  --color-card: #4d4646;
+  --color-card-hi: #575050;
+  --color-sunken: #3a3434;
+  --color-hairline: rgb(242 240 239 / 0.14);
+
+  --color-fit: #8e2b2b;
+  --color-fit-accent: #ff9e94;
+  --color-fit-tint: #6d5654;
+  --color-food: #2e6b3a;
+  --color-food-accent: #7fd98a;
+  --color-food-tint: #566052;
+  --color-sleep: #2b5288;
+  --color-sleep-accent: #9ccbff;
+  --color-sleep-accent-2: #c9e2ff;
+  --color-sleep-accent-3: #7fb3f0;
+  --color-sleep-tint: #5b5e67;
+
+  --font-sans: Arial, Helvetica, sans-serif;
+
+  /* AR2: nothing below 16 px. */
+  --text-xs: 1rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5;
+  /* C type scale: 16 / 18 / 22 / 28 / 36 */
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --radius-card: 20px;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 6px 20px rgb(0 0 0 / 0.22);
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    -webkit-text-size-adjust: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@layer components {
+  /* Standard card used across C. */
+  .card {
+    background: var(--color-card);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+@keyframes slide-from-right {
+  from { transform: translateX(24px); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes slide-from-left {
+  from { transform: translateX(-24px); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+.slide-from-right { animation: slide-from-right 220ms ease-out; }
+.slide-from-left { animation: slide-from-left 220ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .slide-from-right,
+  .slide-from-left { animation: none; }
+}

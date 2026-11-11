@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+Output_*/hi-fi/app/dist/
+Archive/**/dist/

@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "./core/theme.css";
+/* Let Tailwind find the classes used in the shared components. */
+@source "./core";
