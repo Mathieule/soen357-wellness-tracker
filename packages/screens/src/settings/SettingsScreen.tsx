@@ -317,13 +317,25 @@ function ToolsSection() {
   return (
     <Card aria-labelledby="pt-title">
       <SectionHeader id="pt-title" title="Prototype tools" subtitle="For testing only. Not part of the real app." />
-      <label className="flex min-h-14 cursor-pointer items-center justify-between gap-4">
+      <div className="flex min-h-14 items-center justify-between gap-4">
         <span>
-          <span className="block font-bold">Simulate a sync failure</span>
-          <span className="block text-ink-soft">The next data sync will fail so you can test Retry.</span>
+          <span id="sync-fail-label" className="block font-bold">Simulate a sync failure</span>
+          <span id="sync-fail-hint" className="block text-ink-soft">The next data sync will fail so you can test Retry.</span>
         </span>
-        <input type="checkbox" role="switch" checked={failNextSync} onChange={(e) => setFailNextSync(e.target.checked)} className="size-7 shrink-0 accent-[var(--color-act)]" />
-      </label>
+        {/* C.1 (C1-01): 60 × 44 px switch; state shown by knob position AND "On/Off" text. */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={failNextSync}
+          aria-labelledby="sync-fail-label"
+          aria-describedby="sync-fail-hint"
+          onClick={() => setFailNextSync(!failNextSync)}
+          className={cn('relative inline-flex h-11 w-[84px] shrink-0 cursor-pointer items-center rounded-full border-2 px-1 text-base font-bold transition-colors', failNextSync ? 'justify-end border-ink bg-ink text-on-ink' : 'justify-start border-line/60 bg-sunken text-ink')}
+        >
+          <span aria-hidden="true" className={cn('absolute top-1/2 -translate-y-1/2', failNextSync ? 'left-3' : 'right-3')}>{failNextSync ? 'On' : 'Off'}</span>
+          <span aria-hidden="true" className={cn('size-8 rounded-full', failNextSync ? 'bg-on-ink' : 'bg-ink')} />
+        </button>
+      </div>
       <div className="mt-4 grid gap-2">
         <Button variant="secondary" onClick={() => setConfirm('sample')}>
           {empty ? 'Fill my account with sample data' : 'Replace my data with sample data'}

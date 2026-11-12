@@ -72,18 +72,17 @@ function LastNight() {
   if (!s) return <div className="lg:col-span-2"><EmptyState category="sleep" title="No sleep recorded yet">Add last night's sleep to see your stages and trends.</EmptyState></div>;
   return (
     <Card hero="sleep" aria-labelledby="ln-title" className="lg:col-span-2">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="ln-title" className="m-0 text-lg font-bold">
-            {relativeDay(s.date) === 'Today' ? 'Last night' : relativeDay(s.date)}
-          </h2>
-          <p className="m-0 mt-1 text-4xl font-bold">{formatDuration(s.durationMin)}</p>
-          <p className="m-0 mt-1">
-            {s.bedtime} to {s.wakeTime} · goal {formatDuration(g)}
-          </p>
-        </div>
+      {/* C.1 (C1-02): label row on top so the duration keeps one line at 390 px. */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="ln-title" className="m-0 text-lg font-bold">
+          {relativeDay(s.date) === 'Today' ? 'Last night' : relativeDay(s.date)}
+        </h2>
         <Pill tone="sleep">{quality(s.durationMin, g)}</Pill>
       </div>
+      <p className="m-0 mt-2 whitespace-nowrap text-4xl font-bold">{formatDuration(s.durationMin)}</p>
+      <p className="m-0 mt-1">
+        {s.bedtime}–{s.wakeTime} · goal {formatDuration(g)}
+      </p>
       {experience.detail !== 'simple' && (
         <div className="mt-5">
           <Hypnogram stages={s.stages} durationMin={s.durationMin} bedtime={s.bedtime} />
@@ -143,7 +142,7 @@ function Log({ onOpen, onAdd }: { onOpen: (s: SleepSession) => void; onAdd: () =
           <ListGroup>
             {all.slice(0, shown).map((s) => (
               <li key={s.id}>
-                <ListRow title={relativeDay(s.date)} meta={`${formatDuration(s.durationMin)} · ${s.bedtime} to ${s.wakeTime}`} trailing={<Pill tone="sleep">{quality(s.durationMin, user.profile.goals.sleepMin)}</Pill>} onClick={() => onOpen(s)} />
+                <ListRow title={`${relativeDay(s.date)} · ${formatDuration(s.durationMin)}`} meta={`${s.bedtime}–${s.wakeTime} · ${quality(s.durationMin, user.profile.goals.sleepMin)}`} onClick={() => onOpen(s)} />
               </li>
             ))}
           </ListGroup>

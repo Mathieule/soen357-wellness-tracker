@@ -200,6 +200,7 @@ test('T4-01', 'Settings: change name to "Alex M." and confirm', 'Confirmation di
   await page.getByRole('button', { name: 'Save personal information' }).click();
   await page.getByRole('button', { name: 'Yes, save' }).click();
   await page.getByRole('link', { name: 'Back to home' }).click();
+  await page.getByRole('heading', { level: 1, name: /^Hello/ }).waitFor();
   const h = await page.getByRole('heading', { level: 1 }).textContent();
   return { ok: h === 'Hello, Alex', actual: `Greeting "${h}" (first name of "Alex M.")` };
 });
@@ -302,6 +303,8 @@ test('X-04', 'Photo: Salmon sample → Confirm; then another photo → Cancel', 
   await demo(page, 'Alex Martin');
   await nav(page, 'Nutrition');
   const count = () => page.getByRole('region', { name: "Today's meals" }).getByRole('button').filter({ hasText: 'kcal' }).count();
+  await page.getByRole('heading', { name: "Today's meals" }).waitFor();
+  await page.waitForTimeout(300);
   const n0 = await count();
   await page.getByRole('button', { name: 'Scan photo' }).click();
   await page.getByRole('button', { name: /Salmon dinner/ }).click();
@@ -342,18 +345,18 @@ test('X-07', 'Sleep: edit last night, bedtime 22:15', '"Sleep updated" message; 
   await nav(page, 'Sleep');
   await page.getByRole('region', { name: 'Sleep log' }).getByRole('button').first().click();
   await page.getByRole('button', { name: 'Edit' }).click();
-  await page.getByLabel('Bedtime').fill('22:15');
+  await page.getByLabel('Bedtime', { exact: true }).fill('22:15');
   await page.getByRole('button', { name: 'Save night' }).click();
   const msg = await page.getByRole('status').filter({ hasText: 'Sleep updated' }).count();
   await page.reload();
   await page.getByRole('heading', { level: 1, name: 'Sleep' }).waitFor();
-  return { ok: msg > 0 && (await page.getByText(/22:15 to/).count()) > 0, actual: `Updated message: ${msg > 0}; 22:15 shown after reload` };
+  return { ok: msg > 0 && (await page.getByText(/22:15–/).count()) > 0, actual: `Updated message: ${msg > 0}; 22:15 shown after reload` };
 });
 test('X-08', 'Sleep: wake-up time equal to bedtime + 30 min', 'Error "Sleep must last between 1 and 16 hours"', async ({ page }) => {
   await demo(page, 'Alex Martin');
   await nav(page, 'Sleep');
   await page.getByRole('button', { name: 'Add or edit a night' }).click();
-  await page.getByLabel('Bedtime').fill('23:00');
+  await page.getByLabel('Bedtime', { exact: true }).fill('23:00');
   await page.getByLabel('Wake-up time').fill('23:30');
   await page.getByRole('button', { name: 'Save night' }).click();
   return { ok: (await page.getByText(/between 1 and 16 hours/).count()) > 0, actual: 'Error shown' };
@@ -422,6 +425,13 @@ test('R-02', 'Desktop 1280 px', 'Side navigation visible, bottom bar hidden', as
   const navs = await page.getByRole('navigation', { name: 'Main menu' }).evaluateAll((els) => els.map((e) => e.offsetParent !== null));
   await ctx.close();
   return { ok: navs.filter(Boolean).length === 1, actual: `Visible menus: ${navs.filter(Boolean).length} of ${navs.length}` };
+});
+test('R-03', 'Sleep page at 390 px: "Last night" duration and sleep-log times', 'Duration on one line; no time range split over two lines (C1-02, C1-03)', async ({ page }) => {
+  await demo(page, 'Alex Martin');
+  await nav(page, 'Sleep');
+  const h = await page.getByRole('region', { name: 'Last night' }).locator('p.text-4xl').evaluate((e) => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight || '40'));
+  const lines = await page.getByRole('region', { name: 'Sleep log' }).getByRole('button').first().locator('span span').nth(1).evaluate((e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight)));
+  return { ok: h < 1.5 && lines === 1, actual: `Duration lines: ${h.toFixed(1)}; log meta lines: ${lines}` };
 });
 test('A-01', 'Touch targets: every visible button / link / input ≥ 44 × 44 px (5 pages)', 'No smaller target', async ({ page }) => {
   await demo(page, 'Alex Martin');

@@ -1,80 +1,61 @@
-# SOEN 357 – Phase 2, Task 4: Prototyping
-
-A fitness and wellness tracking app for casual users and performance athletes, built as three design iterations.
+# SOEN 357 – Phase 2, Task 4: Wellness Tracker
 
 > Sample prototype for learning and educational purposes only. Not for commercial use or commercial testing.
 
+Wellness Tracker is a mobile-first fitness and wellness app for casual users and athletes. The questionnaire answers produce three experiences: Casual, Training and Performance.
+
+## Quick start
+
+```bash
+npm install
+npm run dev            # Output C prototype → http://localhost:5173
+```
+
+On the welcome screen, choose **Try a demo profile** (Sam = Casual, Alex = Training, Jordan = Performance), or create an account. Full instructions, the list of simulated features and the limitations are in [Output_C/README.md](Output_C/README.md).
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` / `npm run build` / `npm run preview` | Develop, build (type check + Vite), serve the build |
+| `npm run test:c` | Automated test run → `Final_Testing/test-results.md` |
+| `npm run screens` | Export the high-fidelity screens (390 × 844) |
+| `npm run lofi` / `npm run lofi:png` | Rebuild the wireframes / export them as PNG |
+| `npm run archive:a` / `archive:b` | Run the archived first versions of Output A / B |
+
+The screenshot and test tools need Chromium. They use `~/.cache/ms-playwright/chromium-1140` by default, or set `CHROMIUM_PATH`. On a bare Ubuntu/WSL install, also run `sudo apt install libnss3 libasound2t64 fonts-liberation`.
+
 ## Status
 
-| Iteration | Lo-fi | Hi-fi | Docs | State |
-|---|---|---|---|---|
-| **Output A**: initial design (Task 3 Output A) | 15 wireframes + flow | clickable app + 24 screens | `interactions.md`, `design-decisions.md` | done |
-| **Output B**: revised design (Task 3 Output B changelog) | 16 wireframes + flow | clickable app + 29 screens | `interactions.md`, `changelog.md` | done |
-| **Output C**: final design and interactive prototype | – | – | – | not started (see the gap list in the conversation / to be planned) |
-| Final testing and C.1 fixes | – | – | – | not started |
-
-## Folder structure
-
-```
-Output_A/
-  lo-fi/            spec.mjs (editable source) → screens/*.svg, flow.svg, index.html, png/
-  hi-fi/            app/ (React source), screens/*.png, index.html (gallery), screens.mjs
-  interactions.md   design-decisions.md
-Output_B/           same layout; changelog.md instead of design-decisions.md
-shared/src/         code shared by A and B: sample data, storage, simulated food
-                    recognition, UI primitives (adapted shadcn), charts, theme tokens
-tools/lofi/         wireframe generator (dsl.mjs, build.mjs, export-png.mjs)
-tools/screenshots/  hi-fi screen exporter (capture.mjs)
-AI_Documentation/   prompts, AI outputs, student revisions, verification
-```
-
-Output A and Output B are **separate apps with separate localStorage keys** (`wellness-output-a:*`, `wellness-output-b:*`), so one never changes the other. B began as a copy of A, and its changes are listed in `Output_B/changelog.md`. `shared/` holds only code that is identical in both (data, simulations and generic primitives). Output C will get its own copy of anything it changes, so A and B stay frozen.
-
-## Run locally
-
-Requires Node.js 20+ (tested with Node 26.13 and npm 11.20).
-
-```bash
-npm install                 # once, at the project root (npm workspaces)
-
-npm run dev:a               # Output A → http://localhost:5171
-npm run dev:b               # Output B → http://localhost:5172
-
-npm run build               # production builds (type check + Vite) of A and B
-npm run build:a             # or one at a time
-npx vite preview Output_A/hi-fi/app --port 4171   # serve a built app
-```
-
-**Demo account (simulated):** `demo@example.com` / `Demo1234`. You can also create a new account, which goes through the questionnaire.
-
-Open the dev server on a phone-sized window (390 × 844, e.g. Chrome DevTools → iPhone 12/13/14) or on a phone on the same network (`npm run dev:a -- --host`).
-
-## Regenerate the design files
-
-```bash
-npm run lofi                # rebuild all wireframe SVGs + boards from spec.mjs
-npm run lofi:png            # export wireframes to PNG       (needs Chromium)
-npm run screens:a           # export hi-fi screens of A       (needs a build + Chromium)
-npm run screens:b
-npm run check:flows         # end-to-end flow checks on the A and B builds
-```
-
-The exporters use `playwright-core` with an installed Chromium (by default `~/.cache/ms-playwright/chromium-1140`, or set `CHROMIUM_PATH`). On a bare WSL/Ubuntu install Chromium may need system libraries: `sudo apt install libnss3 libasound2t64 fonts-liberation`. Liberation Sans is the metric-compatible stand-in for Arial on Linux.
-
-## What is simulated
-
-Nothing in this prototype uses real people, real devices or real AI.
-
-| Feature | How it is simulated |
+| Deliverable | State |
 |---|---|
-| Accounts / login | Stored in the browser's localStorage, with plain-text passwords. Prototype only |
-| Existing account | `demo@example.com` is pre-created, to test "wrong password" and "email already used" |
-| Activity, workouts, meals, sleep | Seeded sample data, the same on every load and relative to today. New accounts get the same history |
-| Food recognition from a photo | No image analysis: a food word in the file name is matched, otherwise a stable hash picks one of 10 foods after 1.2 s. Photos named *blur*, *dark* or *fail* (or the "Blurry photo" sample) always fail |
-| Sleep stages for hand-entered sleep | Generated by the sample-data generator and labelled "estimated (simulated)" |
+| **Output C** – final design and interactive prototype | Done: lo-fi (15 + flow), hi-fi (25 screens), prototype, interactions, design decisions, changelog, README |
+| **Final testing** – plan, results, C.1 fixes | Done: 38 automated checks pass after C.1. No participant tests were run |
+| **Output A / B** in the new design system | Planned. The first versions, faithful to Task 3, are in `Archive/v1-task3-faithful` |
+| **AI documentation** | Updated; the team must complete `student-revisions.md` |
 
-Not in A or B (planned for C): manual food entry, nutrition history and graphs, satisfaction rating, smart-device connection, editing or deleting workouts and meals.
+## Structure
+
+```
+packages/
+  design-system/   tokens (tokens.css), components, charts          → @ds
+  core/            data model, sample data, personalization engine,
+                   metrics, simulations, localStorage store          → @core
+  screens/         every screen of the app                           → @screens
+Output_C/          prototype entry, lo-fi, hi-fi, docs
+Final_Testing/     test-plan.md, test-results*.md, fixes-c1.md, screenshots/
+Archive/           v1 (Task 3 faithful) Output A, B and early C preview
+tools/             wireframe generator, screenshot exporter, test runner
+AI_Documentation/  prompts, AI outputs, student revisions, verification
+```
+
+The new A and B iterations will reuse the same packages with different settings instead of copying code.
+
+## Versions in git
+
+| Tag / branch | Content |
+|---|---|
+| `v1-task3-faithful` | First A / B (literal Task 3) and the early C preview |
+| `output-c` | Output C as first tested (test run 1) |
+| `output-c1` / `main` | Output C.1 after the fixes |
 
 ## Credits
-
-The starting stack and UI primitives were adapted from [shadcndashboard/shadcndashboard](https://github.com/shadcndashboard/shadcndashboard) (MIT). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The component approach and `cn()` helper were adapted from [shadcndashboard/shadcndashboard](https://github.com/shadcndashboard/shadcndashboard) (MIT). Visual inspiration came from Skulpt, fitness-ui-mobile and logpress-public (patterns only, no code copied). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -77,6 +77,7 @@ for (const s of scenarios) {
     if (s.fullPage) {
       // A fixed bottom bar would be drawn in the middle of a full-page image:
       // place it after the content instead (capture only, the app is unchanged).
+      await page.evaluate(() => document.querySelectorAll('[aria-live="polite"]').forEach((e) => { if (getComputedStyle(e).position === 'fixed') e.style.display = 'none'; }));
       await page.addStyleTag({ content: 'nav[aria-label="Main menu"]{position:static!important} div[aria-live="polite"].fixed{display:none!important}' });
     }
     await page.waitForTimeout(1600); // let animations and the simulated sync finish

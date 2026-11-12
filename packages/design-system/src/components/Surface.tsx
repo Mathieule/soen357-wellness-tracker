@@ -29,7 +29,7 @@ export function SectionHeader({ title, id, action, level = 2, subtitle }: { titl
 
 export function Pill({ children, className, tone }: { children: ReactNode; className?: string; tone?: Category | 'neutral' }) {
   const bg = !tone || tone === 'neutral' ? 'bg-sunken' : CATEGORY[tone].tint;
-  return <span className={cn('inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-base', bg, className)}>{children}</span>;
+  return <span className={cn('inline-flex min-h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-base', bg, className)}>{children}</span>;
 }
 
 /** A tappable row inside a card list. */

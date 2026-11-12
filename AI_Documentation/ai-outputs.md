@@ -21,3 +21,17 @@ All outputs are files in this repository. Nothing was submitted or published by 
 | Docs | `Output_A/interactions.md`, `Output_A/design-decisions.md`, `Output_B/interactions.md`, `Output_B/changelog.md` | |
 
 Design choices made by the AI that the team should review are listed in `Output_A/design-decisions.md` §4 ("Interpretations") and in `Output_B/changelog.md` ("Supporting adjustments").
+
+## Responses to P3–P8 (redesign and final Output C)
+
+| Area | Files | Notes |
+|---|---|---|
+| Design proposal | claude.ai artifact (private link given in chat) | Palette with contrast, typography, personalization table, 3 dashboard mock-ups, A→B→C plan |
+| Archive of v1 | `Archive/v1-task3-faithful/` | Earlier A/B kept runnable (git tag `v1-task3-faithful`) |
+| Design system | `packages/design-system/` | Tokens, buttons, cards, forms, sheets, toasts, rings, arc gauge, bars, trend line, hypnogram, week strip, month calendar |
+| Core | `packages/core/` | Types, 3 demo profiles, weekly program, personalization engine, metrics (load, readiness estimate, comparisons), simulations (photo, device, sync), store |
+| Screens | `packages/screens/` | Welcome, 6-step questionnaire with preview, dashboard with modules and customize, Training, Sleep, Nutrition, Settings |
+| Output C docs | `Output_C/*.md`, `lo-fi/`, `hi-fi/` | 15 wireframes + flow, 25 screens |
+| Testing | `tools/checks/run-tests.mjs`, `Final_Testing/` | 38 automated checks, two runs, C.1 log |
+
+Choices made by the AI that the team should review: three experiences instead of two (documented departure from Task 2); readiness formula; module lists per experience; the app name "Wellness Tracker".

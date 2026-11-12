@@ -23,7 +23,7 @@ These are scripted checks by the project team (with AI assistance), **not** test
 | T3-03 | Customize: remove "Recovery", then add "Training load" | Recovery gone; Training load added at the end | Today's session, This week, Training volume, Nutrition, Sleep, Training load | Pass |  |
 | T3-04 | Training page: open the history calendar and pick a past day | Month grid; selected day shows steps and workouts | Thursday, October 157,603 steps · 24 active min · 1,992 kcalMobility and core51 min | Pass |  |
 | T3-05 | Casual demo (Sleep not chosen): open Sleep | Sleep is under "More" and opens from there | Tabs: Home, Activity, Nutrition, More; Sleep opened from More | Pass |  |
-| T4-01 | Settings: change name to "Alex M." and confirm | Confirmation dialog, success message, greeting updated | Greeting "Settings" (first name of "Alex M.") | **Fail** |  |
+| T4-01 | Settings: change name to "Alex M." and confirm | Confirmation dialog, success message, greeting updated | Greeting "Settings" (first name of "Alex M.") | **Fail** | TS-01 |
 | T4-02 | Settings: switch Training → Performance, cancel once, then confirm | Cancel keeps Training; confirm shows Readiness on dashboard | After cancel still Training: true; after confirm first module: Readiness | Pass |  |
 | T4-03 | Settings: 5 sessions but only 4 training days selected | Error "Choose exactly 5 training days" | Error shown | Pass |  |
 | T4-04 | Rate the app: send without stars, then with 4 stars | Error first; then "You rated the app 4 out of 5" | Error shown: true; thank-you shown: true | Pass |  |
@@ -32,16 +32,16 @@ These are scripted checks by the project team (with AI assistance), **not** test
 | X-01 | Add workout: save empty, then valid "Evening swim 40 min" | Errors first; then success message and workout in history | Errors shown: true; in history: true | Pass |  |
 | X-02 | Open a workout, edit duration to 70, then delete it | Updated message; delete asks to confirm; workout removed | "Steady run" updated to 1 h 10 min, then deleted (confirmation shown) | Pass |  |
 | X-03 | Photo recognition with the "Blurry photo" sample | Error message + "Take another photo" + "Enter it manually" | Error: We could not recognize the food in this photo. Make sure the food is well | Pass |  |
-| X-04 | Photo: Salmon sample → Confirm; then another photo → Cancel | Confirm adds the meal with message; Cancel adds nothing | Meals: 0 → 3 after confirm → 3 after cancel | **Fail** |  |
+| X-04 | Photo: Salmon sample → Confirm; then another photo → Cancel | Confirm adds the meal with message; Cancel adds nothing | Meals: 0 → 3 after confirm → 3 after cancel | **Fail** | TS-01 |
 | X-05 | Photo: Salmon sample → Edit → change calories to 600 → Save | Meal saved with 600 kcal (edited prediction) | Saved as 600 kcal, marked "from photo" | Pass |  |
 | X-06 | Manual meal with no calories, then fixed | Error on calories; then saved | Calories error: true; Soup saved | Pass |  |
-| X-07 | Sleep: edit last night, bedtime 22:15 | "Sleep updated" message; value kept after reload | Script error: locator.fill: Error: strict mode violation: getByLabel('Bedtime') resolved to 2 elements: | **Fail** |  |
-| X-08 | Sleep: wake-up time equal to bedtime + 30 min | Error "Sleep must last between 1 and 16 hours" | Script error: locator.fill: Error: strict mode violation: getByLabel('Bedtime') resolved to 2 elements: | **Fail** |  |
+| X-07 | Sleep: edit last night, bedtime 22:15 | "Sleep updated" message; value kept after reload | Script error: locator.fill: Error: strict mode violation: getByLabel('Bedtime') resolved to 2 elements: | **Fail** | TS-02 |
+| X-08 | Sleep: wake-up time equal to bedtime + 30 min | Error "Sleep must last between 1 and 16 hours" | Script error: locator.fill: Error: strict mode violation: getByLabel('Bedtime') resolved to 2 elements: | **Fail** | TS-02 |
 | K-01 | Keyboard: open Training from a module, press ↑ on "Add workout" | Focus moves to the current nav item | Focused: Training | Pass |  |
 | K-02 | Keyboard: on dashboard press ↓ twice from the first module title; ← / → on nav | Moves module by module; arrows move along the nav bar | After ↓↓: Training volume; after →: Training | Pass |  |
 | K-03 | Keyboard: open a sheet, press Escape | Sheet closes and focus returns to the opener | Focus back on "Type it in" | Pass |  |
 | R-01 | No horizontal scrolling at 360, 390 and 412 px on the 5 main pages (Performance demo) | scrollWidth ≤ viewport width everywhere | No overflow (15 checks) | Pass |  |
 | R-02 | Desktop 1280 px | Side navigation visible, bottom bar hidden | Visible menus: 1 of 1 | Pass |  |
-| A-01 | Touch targets: every visible button / link / input ≥ 44 × 44 px (5 pages) | No smaller target | Settings: INPUT 28×28 | **Fail** |  |
+| A-01 | Touch targets: every visible button / link / input ≥ 44 × 44 px (5 pages) | No smaller target | Settings: INPUT 28×28 | **Fail** | C1-01 |
 | A-02 | Text size: no visible text below 16 px (5 pages) | Smallest computed font-size ≥ 16 px | Smallest: 16px | Pass |  |
 | A-03 | axe-core (WCAG 2.1 A/AA rules) on welcome + 5 pages of each demo profile | No serious or critical violations | No serious/critical violations on 16 page views | Pass |  |
