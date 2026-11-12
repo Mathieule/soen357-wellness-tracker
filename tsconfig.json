@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
@@ -12,14 +16,33 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client", "node"],
+    "types": [
+      "vite/client",
+      "node"
+    ],
     "paths": {
-      "@ds/*": ["./packages/design-system/src/*"],
-      "@ds": ["./packages/design-system/src/index.ts"],
-      "@core/*": ["./packages/core/src/*"],
-      "@core": ["./packages/core/src/index.ts"],
-      "@screens/*": ["./packages/screens/src/*"]
+      "@ds/*": [
+        "./packages/design-system/src/*"
+      ],
+      "@ds": [
+        "./packages/design-system/src/index.ts"
+      ],
+      "@core/*": [
+        "./packages/core/src/*"
+      ],
+      "@core": [
+        "./packages/core/src/index.ts"
+      ],
+      "@screens/*": [
+        "./packages/screens/src/*"
+      ]
     }
   },
-  "include": ["packages", "Output_C/prototype/src", "Output_C/prototype/vite.config.ts"]
+  "include": [
+    "packages",
+    "Output_A/hi-fi/app/src",
+    "Output_B/hi-fi/app/src",
+    "Output_C/prototype/src",
+    "Output_C/prototype/vite.config.ts"
+  ]
 }

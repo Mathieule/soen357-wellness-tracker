@@ -1,15 +1,15 @@
 /**
- * Output C – final interactive prototype.
- * Everything lives in the shared packages; this entry only picks the storage
- * key so Output C data never mixes with other iterations.
+ * Output C – final interactive prototype. Same code base as Output A and B;
+ * the iteration settings (packages/core/src/iteration.ts) select the C features.
  */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ITERATIONS } from '@core';
 import { WellnessApp } from '@screens/App';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <WellnessApp storagePrefix="wellness-output-c" />
+    <WellnessApp iteration={ITERATIONS.C} />
   </StrictMode>,
 );

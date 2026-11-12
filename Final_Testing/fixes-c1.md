@@ -1,8 +1,12 @@
 # C.1 revision log
 
-- **Original Output C:** git tag `output-c` (`git checkout output-c`). Its test run is in `test-results-run1.md` (32 passed, 5 failed out of 37).
-- **Output C.1:** branch `main`. Its test run is in `test-results.md` (38 passed, 0 failed out of 38, including the new regression test R-03).
-- Before and after screenshots are in `screenshots/`.
+| Run | Version | Result | Where |
+|---|---|---|---|
+| 1 | Original Output C (git tag `output-c`) | 32 passed, 5 failed of 37 | `test-results-run1.md` |
+| 2 | After the C.1 fixes below (git tag `output-c1`) | 38 / 38 | git history, tag `output-c1` |
+| 3 | Final Output C, aligned with the Task 2 Output C document (week / month / year charts, "more data?" question, recommendations, accessibility mode, labels, dashboard top, questionnaire rules, meal quantity; see `Output_C/requirements-check.md`) | **44 / 44** | `test-results.md` |
+
+Before and after screenshots are in `screenshots/`.
 
 ## Product issues fixed
 

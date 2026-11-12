@@ -42,7 +42,7 @@ function Nutrients({ m }: { m: Pick<Meal, 'calories' | 'proteinG' | 'carbsG' | '
 }
 
 export function PhotoSheet({ open, onOpenChange, onManual }: { open: boolean; onOpenChange: (o: boolean) => void; onManual: (d?: MealDraft) => void }) {
-  const { saveMeal } = useUser();
+  const { saveMeal, iteration } = useUser();
   const toast = useToast();
   const [step, setStep] = useState<Step>({ k: 'choose' });
   const [mealType, setMealType] = useState<MealType>(guessMealType());
@@ -79,15 +79,17 @@ export function PhotoSheet({ open, onOpenChange, onManual }: { open: boolean; on
             <Button variant="secondary" onClick={() => setStep({ k: 'choose' })}>
               <RotateCcw aria-hidden="true" /> Retake
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                onOpenChange(false);
-                onManual({ ...step.p, mealType, source: 'photo' });
-              }}
-            >
-              <Pencil aria-hidden="true" /> Edit
-            </Button>
+            {iteration.editDelete && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  onOpenChange(false);
+                  onManual({ ...step.p, mealType, source: 'photo' });
+                }}
+              >
+                <Pencil aria-hidden="true" /> Edit
+              </Button>
+            )}
             <Button variant="nutrition" className="basis-full" onClick={confirm}>
               Confirm and save
             </Button>
@@ -134,9 +136,11 @@ export function PhotoSheet({ open, onOpenChange, onManual }: { open: boolean; on
             <Button variant="nutrition" block size="lg" onClick={() => setStep({ k: 'choose' })}>
               <ImageUp aria-hidden="true" /> Take another photo
             </Button>
-            <Button variant="outline" block onClick={() => (onOpenChange(false), onManual())}>
-              <Pencil aria-hidden="true" /> Enter it manually
-            </Button>
+            {iteration.editDelete && (
+              <Button variant="outline" block onClick={() => (onOpenChange(false), onManual())}>
+                <Pencil aria-hidden="true" /> Enter it manually
+              </Button>
+            )}
           </div>
         )}
         {step.k === 'predicted' && (
@@ -150,7 +154,7 @@ export function PhotoSheet({ open, onOpenChange, onManual }: { open: boolean; on
               <span className="font-bold">Meal</span>
               <ChipGroup label="Meal" value={[mealType]} onChange={(v) => setMealType(v[0])} options={MEAL_TYPES.map((m) => ({ value: m, label: m }))} />
             </div>
-            <p className="m-0 text-ink-soft">Is this right? Confirm, edit the values, or retake the photo.</p>
+            <p className="m-0 text-ink-soft">Is this right? Confirm{iteration.editDelete ? ', edit the values,' : ''} or retake the photo.</p>
           </div>
         )}
       </div>
@@ -161,24 +165,24 @@ export function PhotoSheet({ open, onOpenChange, onManual }: { open: boolean; on
 export function MealSheet({ open, onOpenChange, draft }: { open: boolean; onOpenChange: (o: boolean) => void; draft?: MealDraft | null }) {
   const { saveMeal } = useUser();
   const toast = useToast();
-  const [f, setF] = useState({ name: '', mealType: guessMealType(), calories: '', proteinG: '', carbsG: '', fatG: '' });
+  const [f, setF] = useState({ name: '', mealType: guessMealType(), servings: '1', calories: '', proteinG: '', carbsG: '', fatG: '' });
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const editingSaved = !!draft?.id;
   const fromPhoto = draft?.source === 'photo' && !draft?.id;
   useEffect(() => {
     if (!open) return;
     setErrors({});
-    setF({ name: draft?.name ?? '', mealType: draft?.mealType ?? guessMealType(), calories: draft?.calories?.toString() ?? '', proteinG: draft?.proteinG?.toString() ?? '', carbsG: draft?.carbsG?.toString() ?? '', fatG: draft?.fatG?.toString() ?? '' });
+    setF({ name: draft?.name ?? '', mealType: draft?.mealType ?? guessMealType(), servings: String(draft?.servings ?? 1), calories: draft?.calories?.toString() ?? '', proteinG: draft?.proteinG?.toString() ?? '', carbsG: draft?.carbsG?.toString() ?? '', fatG: draft?.fatG?.toString() ?? '' });
   }, [open, draft]);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const num = (v: string, max: number, what: string, req = false) => (!v ? (req ? `Enter the ${what}.` : undefined) : Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= max ? undefined : `Enter a number between 0 and ${max} for ${what}.`);
 
   const submit = (ev: FormEvent) => {
     ev.preventDefault();
-    const e = { name: f.name.trim() ? undefined : 'Enter what you ate, for example "Chicken salad".', calories: num(f.calories, 5000, 'calories', true), proteinG: num(f.proteinG, 500, 'protein'), carbsG: num(f.carbsG, 800, 'carbohydrates'), fatG: num(f.fatG, 400, 'fat') };
+    const e = { name: f.name.trim() ? undefined : 'Enter what you ate, for example "Chicken salad".', servings: Number(f.servings) > 0 && Number(f.servings) <= 20 ? undefined : 'Enter a quantity between 0.25 and 20 servings.', calories: num(f.calories, 5000, 'calories', true), proteinG: num(f.proteinG, 500, 'protein'), carbsG: num(f.carbsG, 800, 'carbohydrates'), fatG: num(f.fatG, 400, 'fat') };
     setErrors(e);
     if (Object.values(e).some(Boolean)) return;
-    const r = saveMeal({ id: draft?.id, name: f.name.trim(), mealType: f.mealType, calories: Math.round(+f.calories), proteinG: Math.round(+(f.proteinG || 0)), carbsG: Math.round(+(f.carbsG || 0)), fatG: Math.round(+(f.fatG || 0)), date: draft?.date ?? today(), time: draft?.time ?? nowTime(), source: draft?.source ?? 'manual' });
+    const r = saveMeal({ id: draft?.id, name: f.name.trim(), mealType: f.mealType, servings: Number(f.servings), calories: Math.round(+f.calories), proteinG: Math.round(+(f.proteinG || 0)), carbsG: Math.round(+(f.carbsG || 0)), fatG: Math.round(+(f.fatG || 0)), date: draft?.date ?? today(), time: draft?.time ?? nowTime(), source: draft?.source ?? 'manual' });
     toast('success', `${r === 'updated' ? 'Meal updated' : 'Food saved'}: ${f.name.trim()} (${Math.round(+f.calories)} kcal).`);
     onOpenChange(false);
   };
@@ -207,7 +211,8 @@ export function MealSheet({ open, onOpenChange, draft }: { open: boolean; onOpen
           <span className="font-bold">Meal</span>
           <ChipGroup label="Meal" value={[f.mealType]} onChange={(v) => setF({ ...f, mealType: v[0] })} options={MEAL_TYPES.map((m) => ({ value: m, label: m }))} />
         </div>
-        <TextField label="Calories (kcal)" inputMode="numeric" value={f.calories} onChange={set('calories')} error={errors.calories} />
+        <TextField label="Quantity (servings)" hint="For example 1, 1.5 or 2." inputMode="decimal" value={f.servings} onChange={set('servings')} error={errors.servings} />
+        <TextField label="Calories (kcal)" hint="For the whole quantity." inputMode="numeric" value={f.calories} onChange={set('calories')} error={errors.calories} />
         <div className="grid grid-cols-3 gap-2">
           <TextField label="Protein g" inputMode="numeric" value={f.proteinG} onChange={set('proteinG')} error={errors.proteinG} />
           <TextField label="Carbs g" inputMode="numeric" value={f.carbsG} onChange={set('carbsG')} error={errors.carbsG} />
@@ -219,7 +224,7 @@ export function MealSheet({ open, onOpenChange, draft }: { open: boolean; onOpen
 }
 
 export function MealDetailSheet({ meal, onClose, onEdit }: { meal: Meal | null; onClose: () => void; onEdit: (m: Meal) => void }) {
-  const { deleteMeal } = useUser();
+  const { deleteMeal, iteration } = useUser();
   const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   return (
@@ -230,7 +235,8 @@ export function MealDetailSheet({ meal, onClose, onEdit }: { meal: Meal | null; 
         title={meal?.name ?? ''}
         description={meal ? `${meal.mealType} · ${formatLongDay(meal.date)} at ${meal.time}` : undefined}
         footer={
-          meal && (
+          meal &&
+          (iteration.editDelete ? (
             <>
               <Button variant="secondary" onClick={() => setConfirm(true)}>
                 <Trash2 aria-hidden="true" /> Delete
@@ -239,13 +245,19 @@ export function MealDetailSheet({ meal, onClose, onEdit }: { meal: Meal | null; 
                 <Pencil aria-hidden="true" /> Edit
               </Button>
             </>
-          )
+          ) : (
+            <Button variant="secondary" onClick={onClose}>
+              Return
+            </Button>
+          ))
         }
       >
         {meal && (
           <>
             <Nutrients m={meal} />
-            <p className="m-0 mt-4 text-ink-soft">Added {meal.source === 'photo' ? 'from a photo (simulated recognition)' : 'manually'}.</p>
+            <p className="m-0 mt-4 text-ink-soft">
+              {meal.servings ? `${meal.servings} serving${meal.servings === 1 ? '' : 's'} · ` : ''}Added {meal.source === 'photo' ? 'from a photo (simulated recognition)' : 'manually'}.
+            </p>
           </>
         )}
       </Sheet>

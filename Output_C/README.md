@@ -22,11 +22,11 @@ npm run dev          # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Development server with hot reload on port 5173 |
-| `npm run build` | Type check, then production build into `Output_C/prototype/dist` |
+| `npm run dev` (= `dev:c`) | Development server with hot reload on port 5173 |
+| `npm run build` | Type check, then production builds of A, B and C |
 | `npm run preview` | Serve the production build on port 4173 |
 | `npm run test:c` | Automated tests (needs a build and Chromium); writes `Final_Testing/test-results.md` |
-| `npm run screens` | Re-export the high-fidelity screens into `Output_C/hi-fi/screens` |
+| `npm run screens:c` | Re-export the high-fidelity screens into `Output_C/hi-fi/screens` |
 | `npm run lofi` | Rebuild the low-fidelity wireframes from `Output_C/lo-fi/spec.mjs` |
 
 The production build uses relative paths and a hash router, so `dist/` can be served from any static host or folder.
@@ -40,7 +40,8 @@ The production build uses relative paths and a hash router, so `dist/` can be se
 | Welcome screen → **Try a demo profile → Sam Lee** | Casual: steps gauge, next session, nutrition. Sleep sits under "More" |
 | **Alex Martin** | Training: today's session, weekly plan, volume, recovery, macros, sleep stages |
 | **Jordan Rivera** | Performance: readiness estimate, key session, training load, hypnogram, macro rings |
-| **Create account** | Full questionnaire (6 steps + preview), then an empty account with "Get started" |
+| **Create account** | Full questionnaire (6 steps, live preview on the last one), then an empty account with "Get started" |
+| Settings → Display → **Large text and buttons** | Accessibility mode |
 
 The demo password for every demo account is `Demo1234`. To reset everything, go to **Settings → Prototype tools → Reset the whole prototype**.
 
@@ -73,6 +74,7 @@ Output_C/
   lo-fi/             wireframes: spec.mjs → screens/*.svg, flow.svg, index.html, png/
   hi-fi/             screens/*.png (25 exports) + index.html gallery
   interactions.md    interaction annotations
+  requirements-check.md  compliance with Task 2 Output C, the redesign brief and Task 4
   design-decisions.md
   changelog.md       what changed and why (vs the archived Output A / B)
 packages/

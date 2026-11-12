@@ -157,3 +157,96 @@ export function sleepMinutes(u: UserData, dates: string[]) {
 }
 
 export { minutesBetween };
+
+/* ------------------------------------------------------------------ */
+/* Progress over week / month / year (Task 2: "Browsing progress charts */
+/* from the past week, month, year"; "Graph summarizing previous calorie */
+/* intake (month, week, year)").                                         */
+/* ------------------------------------------------------------------ */
+
+export type Range = 'week' | 'month' | 'year';
+export type SeriesKind = 'calories' | 'minutes' | 'steps' | 'sleep';
+export interface SeriesPoint {
+  label: string;
+  longLabel: string;
+  value: number;
+  isNow?: boolean;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function dayValue(u: UserData, kind: SeriesKind, d: string): number | null {
+  if (kind === 'calories') {
+    const ms = u.meals.filter((m) => m.date === d);
+    return ms.length ? sum(ms.map((m) => m.calories)) : null;
+  }
+  if (kind === 'minutes') return minutesOn(u, d);
+  if (kind === 'steps') return u.activity.find((a) => a.date === d)?.steps ?? null;
+  const s = u.sleep.find((x) => x.date === d);
+  return s ? Math.round(s.durationMin / 6) / 10 : null;
+}
+
+/**
+ * week  → last 7 days, one value per day
+ * month → last 30 days, one value per day
+ * year  → last 12 months: total minutes per month, or the daily average
+ *         (calories, steps, sleep hours) over the days that have data
+ */
+export function rangeSeries(u: UserData, kind: SeriesKind, range: Range): SeriesPoint[] {
+  const t = today();
+  if (range !== 'year') {
+    return lastDays(range === 'week' ? 7 : 30, t).map((d) => ({
+      label: range === 'week' ? dayLabel(d) : String(Number(d.slice(8))),
+      longLabel: formatDay(d),
+      value: dayValue(u, kind, d) ?? 0,
+      isNow: d === t,
+    }));
+  }
+  const [ty, tm] = t.split('-').map(Number);
+  return Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(ty, tm - 1 - (11 - i), 1);
+    const y = date.getFullYear();
+    const m = date.getMonth();
+    const prefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+    const days = new Date(y, m + 1, 0).getDate();
+    const vals: number[] = [];
+    for (let d = 1; d <= days; d++) {
+      const iso = `${prefix}-${String(d).padStart(2, '0')}`;
+      if (iso > t) break;
+      const v = dayValue(u, kind, iso);
+      if (v !== null && (kind !== 'minutes' || v > 0)) vals.push(v);
+    }
+    const value = kind === 'minutes' ? sum(vals) : vals.length ? Math.round((avg(vals) * 10)) / 10 : 0;
+    return { label: MONTHS[m], longLabel: `${MONTHS[m]} ${y}${kind === 'minutes' ? ' (total)' : ' (daily average)'}`, value: kind === 'sleep' ? value : Math.round(value), isNow: i === 11 };
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Recommendations (Task 2 Output B concept), rule-based on logged data */
+/* ------------------------------------------------------------------ */
+
+export interface Recommendation {
+  category: 'fitness' | 'nutrition' | 'sleep';
+  text: string;
+}
+
+export function recommendations(u: UserData, opts: { sleep: boolean; plannedLeft: number; nextDay?: string }): Recommendation[] {
+  const out: Recommendation[] = [];
+  const g = u.profile.goals;
+  const s = lastSleep(u);
+  if (opts.sleep && s && s.durationMin < g.sleepMin * 0.85) {
+    const wake = toMinutes(s.wakeTime);
+    const bed = (wake - g.sleepMin + 1440 * 2) % 1440;
+    out.push({ category: 'sleep', text: `You slept ${Math.floor(s.durationMin / 60)} h ${s.durationMin % 60} min. To reach ${g.sleepMin / 60} h, aim to be in bed by ${String(Math.floor(bed / 60)).padStart(2, '0')}:${String(bed % 60).padStart(2, '0')}.` });
+  }
+  const t = totals(mealsOn(u));
+  const hour = new Date().getHours();
+  if (t.calories > 0 && hour >= 14 && t.proteinG < g.proteinG * 0.5) out.push({ category: 'nutrition', text: `Protein is at ${t.proteinG} of ${g.proteinG} g today. A protein-rich snack would help.` });
+  if (u.profile.fitnessGoals.includes('lose-weight') && t.calories > g.calories) out.push({ category: 'nutrition', text: `You are ${t.calories - g.calories} kcal over today's goal. A light dinner keeps you on track.` });
+  const lb = loadBalance(u);
+  if (lb.ratio > 1.3) out.push({ category: 'fitness', text: 'Your training load is well above your usual week. Keep the next session easy.' });
+  else if (opts.plannedLeft > 0) out.push({ category: 'fitness', text: `${opts.plannedLeft} planned workout${opts.plannedLeft > 1 ? 's' : ''} left this week${opts.nextDay ? `; the next one is ${opts.nextDay}` : ''}.` });
+  const a = activityOn(u);
+  if (out.length < 3 && u.activity.length && a.steps < g.steps) out.push({ category: 'fitness', text: `${(g.steps - a.steps).toLocaleString('en-CA')} steps to reach your daily goal.` });
+  return out.slice(0, 3);
+}

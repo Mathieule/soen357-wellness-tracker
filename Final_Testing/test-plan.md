@@ -21,12 +21,13 @@ Check that a reviewer can complete the essential tasks T1–T4 in the Output C p
 | T1-01 | T1 account | Create account with invalid email | Field error, no account |
 | T1-02 | T1 | Weak password | Password rule error |
 | T1-03 | T1 | Existing email | "Already exists" error |
-| T1-04 | T1 questionnaire | Continue without answer | Error, stays on question |
+| T1-04 | T1 questionnaire | Continue on the persona question without answer | Error, stays on question |
 | T1-05 | T1 questionnaire (empty answers) | No data type selected | "Choose at least one" error |
-| T1-06 | T1 | Complete questionnaire with 5 sessions | Empty dashboard + Get started; plan has 5 sessions |
+| T1-06 | T1 | Complete questionnaire with 5 workouts per week | Empty dashboard + Get started; plan has 5 workouts |
+| T1-07 | T1 (Task 2 rules) | Tap a persona; goals page before/after choosing | Auto-advance; "Create my dashboard" only after ≥ 1 goal |
 | T2-01 | T2 | Wrong password | "Incorrect" error |
-| T2-02 | T2 | Training demo dashboard | Session first; calorie goal visible |
-| T2-03 | T2 / personalization | Compare the 3 demo dashboards | Casual simple; Performance has Readiness and Load |
+| T2-02 | T2 | Training demo dashboard | Top: today's workout + calorie goal |
+| T2-03 | T2 / personalization | Compare the 3 demo dashboards | All start with today's workout; Casual simple; Performance has Readiness and Load |
 | T2-04 | T2 sync | Forced sync failure | Error + "Retry sync" |
 | T3-01 | T3 | Open Sleep from module | Sleep page; focus on main action |
 | T3-02 | T3 reorder | Move a module up, reload | Order changed and kept |
@@ -50,6 +51,11 @@ Check that a reviewer can complete the essential tasks T1–T4 in the Output C p
 | K-01 | Keyboard | ↑ on main action | Nav item focused |
 | K-02 | Keyboard | ↓ between modules; → on nav | Focus moves as specified |
 | K-03 | Keyboard | Esc in a sheet | Closes; focus returns |
+| N-01 | Adaptation / Responding | Casual: "Do you want to see more data?" → Yes | Prompt shown with reason; more modules |
+| N-02 | Progress charts | Calorie intake → Year | 12 monthly values |
+| N-03 | Accessibility mode | Large text and buttons on, reload | Root 20 px, bold labels, kept |
+| N-04 | Meal quantity | Quantity 0 then 2 servings | Error, then saved with "2 servings" |
+| N-05 | Recommendations | Training demo dashboard | At least one suggestion |
 | R-01 | Responsiveness | 360 / 390 / 412 px, 5 pages | No horizontal scroll |
 | R-02 | Responsiveness | 1280 px | Side rail only |
 | R-03 | Responsiveness (added in C.1) | Sleep page at 390 px | No wrapped duration or time range |

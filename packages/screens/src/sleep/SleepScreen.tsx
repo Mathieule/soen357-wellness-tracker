@@ -14,7 +14,8 @@ import {
 } from '@core';
 import { BarsChart, Button, Card, CATEGORY, ConfirmDialog, Delta, EmptyState, Hypnogram, InlineStatus, ListGroup, ListRow, Pill, SectionHeader, Sheet, StageBar, StatTile, TextField, TrendChart, useToast } from '@ds';
 import { TopBar } from '../layout/TopBar';
-import { arrowUpToNav, useInitialFocus } from '../lib/focus';
+import { useMainAction } from '../lib/focus';
+import { ProgressChart } from '../lib/ProgressChart';
 
 const ACCENT = CATEGORY.sleep.accent;
 const hours = (m: number) => Math.round(m / 6) / 10;
@@ -29,7 +30,7 @@ export function SleepScreen() {
   const addRef = useRef<HTMLButtonElement>(null);
   const [form, setForm] = useState<{ open: boolean; edit: SleepSession | null }>({ open: false, edit: null });
   const [detail, setDetail] = useState<SleepSession | null>(null);
-  useInitialFocus(addRef);
+  const mainKeys = useMainAction(addRef);
   const last = lastSleep(user);
   const g = user.profile.goals.sleepMin;
 
@@ -49,14 +50,15 @@ export function SleepScreen() {
         <TrendChart points={lastDays(14).map((d) => ({ label: String(Number(d.slice(8))), longLabel: formatLongDay(d), value: hours(sleepMinutes(user, [d])[0]) }))} accent={ACCENT} unit="h" title="Hours of sleep, last 14 nights" goal={hours(g)} />
       </Card>
     ) : null,
+    progress: <ProgressChart key="p" kind="sleep" title="Hours of sleep" category="sleep" goal={{ week: hours(g), month: hours(g), year: hours(g) }} yearNote="Average per night, per month" />,
     log: <Log key="g" onOpen={setDetail} onAdd={() => setForm({ open: true, edit: null })} />,
   };
 
   return (
     <>
-      <TopBar title="Sleep" category="sleep" subtitle={last ? `Last night: ${formatDuration(last.durationMin)}` : 'No nights recorded yet'} />
-      <Button ref={addRef} onKeyDown={arrowUpToNav} variant="sleep" size="lg" block className="mt-6" onClick={() => setForm({ open: true, edit: null })}>
-        <Plus aria-hidden="true" /> Add or edit a night
+      <TopBar title="Sleep Metrics" category="sleep" subtitle={last ? `Last night: ${formatDuration(last.durationMin)}` : 'No nights recorded yet'} />
+      <Button ref={addRef} onKeyDown={mainKeys} variant="sleep" size="lg" block className="mt-6" onClick={() => setForm({ open: true, edit: null })}>
+        <Plus aria-hidden="true" /> Enter a new sleep log
       </Button>
       <div className="mt-6 grid gap-5 lg:grid-cols-2">{experience.sleep.map((s) => sections[s])}</div>
       <SleepSheet open={form.open} edit={form.edit} onOpenChange={(o) => setForm({ open: o, edit: o ? form.edit : null })} />
@@ -132,7 +134,7 @@ function Log({ onOpen, onAdd }: { onOpen: (s: SleepSession) => void; onAdd: () =
   const all = sortedSleep(user);
   return (
     <section aria-labelledby="log-title" className="lg:col-span-2">
-      <SectionHeader id="log-title" title="Sleep log" />
+      <SectionHeader id="log-title" title="Previous sleep logs" subtitle="Tap a night to see its details." />
       {all.length === 0 ? (
         <EmptyState category="sleep" title="Your sleep log is empty" action={<Button variant="sleep" onClick={onAdd}><Plus aria-hidden="true" /> Add a night</Button>}>
           Each night you add appears here.
@@ -189,7 +191,7 @@ export function SleepSheet({ open, edit, onOpenChange }: { open: boolean; edit: 
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={edit ? 'Edit night' : 'Add a night'}
+      title={edit ? 'Edit sleep log' : 'New sleep log'}
       description="When did you go to bed and wake up?"
       footer={
         <>
@@ -221,7 +223,7 @@ export function SleepSheet({ open, edit, onOpenChange }: { open: boolean; edit: 
 }
 
 function SleepDetailSheet({ session, onClose, onEdit }: { session: SleepSession | null; onClose: () => void; onEdit: (s: SleepSession) => void }) {
-  const { deleteSleep, user } = useUser();
+  const { deleteSleep, user, iteration } = useUser();
   const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   return (
@@ -234,9 +236,15 @@ function SleepDetailSheet({ session, onClose, onEdit }: { session: SleepSession 
         footer={
           session && (
             <>
-              <Button variant="secondary" onClick={() => setConfirm(true)}>
-                <Trash2 aria-hidden="true" /> Delete
-              </Button>
+              {iteration.editDelete ? (
+                <Button variant="secondary" onClick={() => setConfirm(true)}>
+                  <Trash2 aria-hidden="true" /> Delete
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={onClose}>
+                  Return
+                </Button>
+              )}
               <Button onClick={() => onEdit(session)}>
                 <Pencil aria-hidden="true" /> Edit
               </Button>

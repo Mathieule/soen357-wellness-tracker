@@ -12,6 +12,7 @@ const training = demo('Alex Martin');
 const performance = demo('Jordan Rivera');
 const nav = (label) => async (page) => page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: label }).first().click();
 
+const pick = async (page, text) => { await page.getByText(text, { exact: true }).click(); await page.waitForTimeout(450); };
 async function newAccount(page) {
   await page.getByRole('radio', { name: 'Create account' }).check({ force: true });
   await page.getByLabel('Email').fill('nina@example.com');
@@ -30,17 +31,15 @@ export const scenarios = [
       await page.getByRole('button', { name: 'Log in' }).click();
     },
   },
-  { name: 'C03-onboarding-goal', run: async (page) => { await newAccount(page); await cont(page); await page.getByText('Train regularly', { exact: false }).first().waitFor().catch(() => {}); } },
+  { name: 'C03-onboarding-persona', run: async (page) => { await newAccount(page); await cont(page); await page.getByText('Which describes you best?').waitFor(); } },
   {
     name: 'C04-onboarding-sessions',
     run: async (page) => {
       await newAccount(page);
       await cont(page);
-      await page.getByText('Organize and follow my training').click();
-      await cont(page);
-      await page.getByText('Regular', { exact: true }).click();
-      await cont(page);
-      await page.getByRole('button', { name: 'Increase Sessions per week' }).click();
+      await pick(page, 'Regular training');
+      await pick(page, 'Regular');
+      await page.getByRole('button', { name: 'Increase Workouts per week' }).click();
     },
   },
   {
@@ -48,41 +47,38 @@ export const scenarios = [
     run: async (page) => {
       await newAccount(page);
       await cont(page);
-      await page.getByText('Organize and follow my training').click();
-      await cont(page);
-      await page.getByText('Regular', { exact: true }).click();
-      await cont(page);
+      await pick(page, 'Regular training');
+      await pick(page, 'Regular');
       await cont(page);
       await cont(page);
     },
   },
   {
-    name: 'C06-onboarding-preview',
+    name: 'C06-onboarding-goals-preview',
     fullPage: true,
     run: async (page) => {
       await newAccount(page);
       await cont(page);
-      await page.getByText('Organize and follow my training').click();
+      await pick(page, 'Regular training');
+      await pick(page, 'Regular');
       await cont(page);
-      await page.getByText('Regular', { exact: true }).click();
-      await cont(page);
-      await cont(page);
-      await page.getByText('Training and activity').click();
+      await page.getByText('Workouts and activity').click();
       await page.getByText('Sleep', { exact: true }).click();
       await cont(page);
+      await page.getByText('Build strength', { exact: true }).click();
     },
   },
   { name: 'C07-dashboard-casual', fullPage: true, run: casual },
   { name: 'C08-dashboard-training', fullPage: true, run: training },
   { name: 'C09-dashboard-performance', fullPage: true, run: performance },
   { name: 'C10-dashboard-customize', fullPage: true, run: async (page) => { await training(page); await page.getByRole('button', { name: 'Customize' }).click(); } },
-  { name: 'C11-activity-casual', fullPage: true, run: async (page) => { await casual(page); await nav('Activity')(page); } },
-  { name: 'C12-training-training', fullPage: true, run: async (page) => { await training(page); await nav('Training')(page); } },
-  { name: 'C13-training-performance', fullPage: true, run: async (page) => { await performance(page); await nav('Training')(page); } },
-  { name: 'C14-workout-errors', run: async (page) => { await training(page); await nav('Training')(page); await page.getByRole('button', { name: 'Add workout' }).click(); await page.getByRole('button', { name: 'Save workout' }).click(); } },
-  { name: 'C15-calendar', run: async (page) => { await training(page); await nav('Training')(page); await page.getByRole('button', { name: 'Open' }).click(); } },
+  { name: 'C11-activity-casual', fullPage: true, run: async (page) => { await casual(page); await nav('Fitness')(page); } },
+  { name: 'C12-training-training', fullPage: true, run: async (page) => { await training(page); await nav('Fitness')(page); } },
+  { name: 'C13-training-performance', fullPage: true, run: async (page) => { await performance(page); await nav('Fitness')(page); } },
+  { name: 'C14-workout-errors', run: async (page) => { await training(page); await nav('Fitness')(page); await page.getByRole('button', { name: 'Enter a new workout' }).click(); await page.getByRole('button', { name: 'Save workout' }).click(); } },
+  { name: 'C15-calendar', run: async (page) => { await training(page); await nav('Fitness')(page); await page.getByRole('button', { name: 'Open' }).click(); } },
   { name: 'C16-sleep-training', fullPage: true, run: async (page) => { await training(page); await nav('Sleep')(page); } },
-  { name: 'C17-sleep-sheet', run: async (page) => { await training(page); await nav('Sleep')(page); await page.getByRole('button', { name: 'Add or edit a night' }).click(); } },
+  { name: 'C17-sleep-sheet', run: async (page) => { await training(page); await nav('Sleep')(page); await page.getByRole('button', { name: 'Enter a new sleep log' }).click(); } },
   { name: 'C18-nutrition-performance', fullPage: true, run: async (page) => { await performance(page); await nav('Nutrition')(page); } },
   { name: 'C19-photo-prediction', run: async (page) => { await training(page); await nav('Nutrition')(page); await page.getByRole('button', { name: 'Scan photo' }).click(); await page.getByRole('button', { name: /Salmon dinner/ }).click(); await page.getByText('We think this is').waitFor(); } },
   { name: 'C20-photo-failed', run: async (page) => { await training(page); await nav('Nutrition')(page); await page.getByRole('button', { name: 'Scan photo' }).click(); await page.getByRole('button', { name: /Blurry photo/ }).click(); await page.getByRole('alert').waitFor(); } },
@@ -94,13 +90,12 @@ export const scenarios = [
     run: async (page) => {
       await newAccount(page);
       await cont(page);
-      await page.getByText('Stay active, keep it simple').click();
+      await pick(page, 'Casual user');
+      await pick(page, 'Beginner');
       await cont(page);
-      await page.getByText('Beginner', { exact: true }).click();
+      await page.getByText('Workouts and activity').click();
       await cont(page);
-      await cont(page);
-      await page.getByText('Training and activity').click();
-      await cont(page);
+      await page.getByText('Stay healthy and active', { exact: true }).click();
       await page.getByRole('button', { name: 'Create my dashboard' }).click();
       await page.getByRole('heading', { level: 1, name: /^Hello/ }).waitFor();
     },
@@ -115,4 +110,6 @@ export const scenarios = [
     },
   },
   { name: 'C25-desktop-dashboard', viewport: { width: 1280, height: 900 }, run: performance },
+  { name: 'C26-large-text-mode', fullPage: true, run: async (page) => { await training(page); await page.getByRole('link', { name: 'Settings' }).first().click(); await page.getByRole('switch', { name: 'Large text and buttons' }).click(); await page.getByRole('link', { name: 'Return to the dashboard' }).click(); await page.getByRole('heading', { level: 1, name: /^Hello/ }).waitFor(); } },
+  { name: 'C27-casual-more-data-prompt', run: casual },
 ];

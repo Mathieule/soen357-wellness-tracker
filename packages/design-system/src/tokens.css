@@ -118,6 +118,20 @@
   }
 }
 
+/* Accessibility mode (Output C): every rem-based size scales by 1.25 and
+   labels, legends, buttons and navigation become bold. */
+html.large-ui {
+  font-size: 20px;
+}
+html.large-ui label,
+html.large-ui legend,
+html.large-ui button,
+html.large-ui [data-nav-item],
+html.large-ui h2,
+html.large-ui h3 {
+  font-weight: 700;
+}
+
 /* Motion: short, purposeful, removed for reduced motion (AR8). */
 @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes slide-in-right { from { transform: translateX(28px); opacity: 0.3; } to { transform: none; opacity: 1; } }

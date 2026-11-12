@@ -15,7 +15,8 @@ type Mode = 'login' | 'signup';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function AuthScreen() {
-  const { logIn, signUp } = useStore();
+  const { logIn, signUp, iteration } = useStore();
+  const demos = DEMO_ACCOUNTS.filter((d) => iteration.experiences.includes(d.experience));
   const toast = useToast();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('login');
@@ -54,7 +55,10 @@ export function AuthScreen() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-[480px] flex-col px-5 pb-10 pt-[max(40px,env(safe-area-inset-top))]">
       <div className="anim-rise">
-        <BrandMark size={64} />
+        <div className="flex items-center justify-between">
+          <BrandMark size={64} />
+          <span className="rounded-full bg-surface px-3 py-1 font-bold">{iteration.name}</span>
+        </div>
         <h1 className="m-0 mt-6 text-4xl font-bold tracking-tight">Wellness Tracker</h1>
         <p className="m-0 mt-3 text-lg text-ink-soft">Training, food and sleep in one calm place, shaped around how you live.</p>
       </div>
@@ -95,7 +99,7 @@ export function AuthScreen() {
         </h2>
         <p className="m-0 mt-1 text-ink-soft">Each one shows a different experience. Sample data, simulated login.</p>
         <ul className="m-0 mt-4 grid list-none gap-3 p-0">
-          {DEMO_ACCOUNTS.map((d) => (
+          {demos.map((d) => (
             <li key={d.email}>
               <button type="button" onClick={() => demo(d.email, d.name)} className="card flex min-h-16 w-full cursor-pointer items-center gap-4 px-4 py-3 text-left text-ink transition-colors hover:bg-surface-hi">
                 <span className="min-w-0 flex-1">
@@ -111,7 +115,7 @@ export function AuthScreen() {
             </li>
           ))}
         </ul>
-        <p className="m-0 mt-4 text-ink-soft">Or log in with {DEMO_ACCOUNTS[1].email} / Demo1234.</p>
+        <p className="m-0 mt-4 text-ink-soft">Or log in with {demos[0].email} / Demo1234.</p>
       </section>
 
       <p className="m-0 mt-10 text-ink-soft">Sample prototype for learning and educational purposes only. Not for commercial use or commercial testing.</p>

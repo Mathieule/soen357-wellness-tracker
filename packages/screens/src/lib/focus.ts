@@ -7,16 +7,27 @@
  */
 import { useEffect, type KeyboardEvent, type RefObject } from 'react';
 import { useLocation } from 'react-router';
+import { useStore } from '@core';
 
 export type Via = 'nav' | 'widget';
 
 export function useInitialFocus(ref: RefObject<HTMLElement | null>) {
   const via = (useLocation().state as { via?: Via } | null)?.via;
+  const { iteration } = useStore();
   useEffect(() => {
-    if (via === 'widget') ref.current?.focus();
+    // Output A (Task 3 C11/C15/C18): focus always starts on the main action.
+    // Output B/C: only when opened from a widget; from the nav bar focus stays on the bar.
+    if (iteration.keyboardRules ? via === 'widget' : true) ref.current?.focus();
     // On arrival only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+}
+
+/** Main action of a section page: initial focus + (B/C) Arrow Up to the nav bar. */
+export function useMainAction(ref: RefObject<HTMLElement | null>) {
+  useInitialFocus(ref);
+  const { iteration } = useStore();
+  return iteration.keyboardRules ? arrowUpToNav : undefined;
 }
 
 export function focusCurrentNavItem() {

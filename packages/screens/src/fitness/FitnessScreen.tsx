@@ -14,7 +14,8 @@ import {
 } from '@core';
 import { BarsChart, Button, Card, CATEGORY, ChipGroup, Delta, EmptyState, ListGroup, ListRow, MonthCalendar, Pill, SectionHeader, Sheet, StatTile, TrendChart, WeekStrip, type StripDay } from '@ds';
 import { TopBar } from '../layout/TopBar';
-import { arrowUpToNav, useInitialFocus } from '../lib/focus';
+import { useMainAction } from '../lib/focus';
+import { ProgressChart } from '../lib/ProgressChart';
 import { WorkoutDetailSheet, WorkoutSheet, type WorkoutDraft } from './WorkoutSheets';
 
 const ACCENT = CATEGORY.fitness.accent;
@@ -37,7 +38,7 @@ export function FitnessScreen() {
   const [draft, setDraft] = useState<WorkoutDraft | null>(null);
   const [sheet, setSheet] = useState(false);
   const [detail, setDetail] = useState<Workout | null>(null);
-  useInitialFocus(addRef);
+  const mainKeys = useMainAction(addRef);
 
   const plan = weekPlan(user.profile, user.workouts);
   const open = (d: WorkoutDraft | null) => {
@@ -51,6 +52,8 @@ export function FitnessScreen() {
     plan: <PlanSection key="p" plan={plan} onLog={logPlanned} />,
     todayActivity: <TodayActivity key="a" />,
     stepsWeek: <StepsWeek key="s" />,
+    progress: <ProgressChart key="pr" kind="minutes" title="Workout minutes" category="fitness" yearNote="Total minutes per month" />,
+    summary: <Summary key="su" />,
     volumeWeeks: <VolumeWeeks key="v" />,
     load: <LoadSection key="l" />,
     intensity: <IntensitySection key="i" />,
@@ -61,12 +64,12 @@ export function FitnessScreen() {
   return (
     <>
       <TopBar
-        title={experience.fitnessLabel}
+        title="Fitness Metrics"
         category="fitness"
-        subtitle={experience.id === 'casual' ? 'Keep moving, one day at a time' : `${weekProgress(plan).done} of ${weekProgress(plan).planned} sessions done this week`}
+        subtitle={experience.id === 'casual' ? 'Keep moving, one day at a time' : `${weekProgress(plan).done} of ${weekProgress(plan).planned} workouts done this week`}
       />
-      <Button ref={addRef} onKeyDown={arrowUpToNav} variant="fitness" size="lg" block className="mt-6" onClick={() => open(null)}>
-        <Plus aria-hidden="true" /> Add workout
+      <Button ref={addRef} onKeyDown={mainKeys} variant="fitness" size="lg" block className="mt-6" onClick={() => open(null)}>
+        <Plus aria-hidden="true" /> Enter a new workout
       </Button>
       <div className="mt-6 grid gap-5 lg:grid-cols-2">{experience.fitness.map((s) => sections[s])}</div>
 
@@ -170,6 +173,33 @@ function TodayActivity() {
         <StatTile label="Active" value={String(a.activeMin)} unit="min" progress={a.activeMin / g.activeMin} accent={ACCENT} sub={`of ${g.activeMin}`} />
         {experience.detail !== 'simple' && <StatTile label="Burned" value={a.caloriesKcal.toLocaleString('en-CA')} unit="kcal" />}
       </div>
+    </Card>
+  );
+}
+
+/** "Page summarizing workouts" (Task 2): this month at a glance. */
+function Summary() {
+  const { user, experience } = useUser();
+  const t = today();
+  const monthStart = t.slice(0, 8) + '01';
+  const ws = user.workouts.filter((w) => w.date >= monthStart && w.date <= t);
+  const minutes = ws.reduce((s, w) => s + w.durationMin, 0);
+  const kcal = ws.reduce((s, w) => s + w.caloriesKcal, 0);
+  const byType = ws.reduce<Record<string, number>>((m, w) => ((m[w.type] = (m[w.type] ?? 0) + 1), m), {});
+  const top = Object.entries(byType).sort((a, b) => b[1] - a[1])[0]?.[0];
+  return (
+    <Card aria-labelledby="sum-title">
+      <SectionHeader id="sum-title" title="This month" />
+      {ws.length === 0 ? (
+        <p className="m-0">No workouts this month yet.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <StatTile label="Workouts" value={String(ws.length)} />
+          <StatTile label="Time" value={formatDuration(minutes)} />
+          {experience.detail !== 'simple' && <StatTile label="Average" value={String(Math.round(minutes / ws.length))} unit="min" />}
+          {experience.detail !== 'simple' && <StatTile label="Burned" value={kcal.toLocaleString('en-CA')} unit="kcal" sub={top ? `Most: ${top}` : undefined} />}
+        </div>
+      )}
     </Card>
   );
 }
@@ -302,7 +332,7 @@ function History({ onOpen, onAdd }: { onOpen: (w: Workout) => void; onAdd: () =>
   }
   return (
     <section aria-labelledby="hist-title" className="lg:col-span-2">
-      <SectionHeader id="hist-title" title={experience.detail === 'simple' ? 'Recent workouts' : 'Workout history'} />
+      <SectionHeader id="hist-title" title="Previous workouts" subtitle="Tap a workout to see its details." />
       {all.length === 0 ? (
         <EmptyState category="fitness" title="No workouts yet" action={<Button variant="fitness" onClick={onAdd}><Plus aria-hidden="true" /> Add your first workout</Button>}>
           Logged workouts appear here, newest first.

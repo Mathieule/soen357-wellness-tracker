@@ -1,41 +1,204 @@
 /**
  * C3 Profile and settings (T4: change personal information and preferences).
  * Every change is confirmed (Task 2) and followed by a status message (AR10).
- * Sections: personal info · experience (profile, level, sessions, days, data)
- * · daily goals · smart device (simulated) · rate the app (1–5) ·
- * prototype tools · log out · delete account ("Are you sure?").
+ *   All versions: personal info (age, weight, height) · persona · fitness
+ *     goals · daily goals (calorie goal set by the user) · "show more data" ·
+ *     log out · delete account ("Are you sure?").
+ *   Output A: pin / unpin / order dashboard metrics HERE (Task 2 Output A).
+ *   Output B: + rate the app 1–5.
+ *   Output C: full lifestyle / persona editor (level, workouts per week,
+ *     training days, data), accessibility mode, smart device + sync status.
  */
-import { Bluetooth, Loader2, LogOut, RefreshCw, Star, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bluetooth, Loader2, LogOut, Pin, PinOff, RefreshCw, Star, Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { buildExperience, DAY_SHORT, DEVICES, EXPERIENCE_INFO, LEVEL_LABEL, MODULE_INFO, useUser, type ExperienceId, type Level, type MetricId } from '@core';
-import { Avatar, Button, Card, ChipGroup, ChoiceCards, cn, ConfirmDialog, FieldError, InlineStatus, Pill, SectionHeader, Stepper, TextAreaField, TextField, useToast } from '@ds';
+import { buildExperience, dashboardModules, DAY_SHORT, DEVICES, EXPERIENCE_INFO, LEVEL_LABEL, MODULE_INFO, useUser, type ExperienceId, type FitnessGoal, type Level, type MetricId, type ModuleId } from '@core';
+import { Avatar, Button, Card, CategoryBadge, ChipGroup, ChoiceCards, cn, ConfirmDialog, FieldError, InlineStatus, Pill, SectionHeader, Stepper, TextAreaField, TextField, useToast } from '@ds';
 import { TopBar } from '../layout/TopBar';
+import { GOAL_LABEL } from '../onboarding/Onboarding';
 
 export function SettingsScreen() {
-  const { user, experience } = useUser();
+  const { user, experience, iteration } = useUser();
   const p = user.profile;
   return (
     <>
-      <TopBar title="Settings" />
+      <TopBar title={iteration.settingsInNav ? 'Profile' : 'Settings'} />
       <div className="mt-6 flex items-center gap-4">
         <Avatar name={p.name} size={72} />
         <div className="min-w-0">
           <p className="m-0 text-2xl font-bold">{p.name}</p>
           <p className="m-0 text-ink-soft">{p.email}</p>
-          <Pill className="mt-2">{experience.name} experience</Pill>
+          <Pill className="mt-2">{experience.name} persona</Pill>
         </div>
       </div>
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
-        <ExperienceSection />
+        {iteration.personaEditor === 'full' ? <ExperienceSection /> : <PersonaSection />}
+        {iteration.pinning === 'settings' && <PinSection />}
         <PersonalSection />
         <GoalsSection />
-        <DeviceSection />
-        <RatingSection />
+        <ViewSection />
+        {iteration.device && <DeviceSection />}
+        {iteration.rating && <RatingSection />}
         <ToolsSection />
         <AccountSection />
       </div>
     </>
+  );
+}
+
+/** Accessible on/off switch (≥ 44 px, state shown by position AND "On/Off"). */
+function Toggle({ label, hint, checked, onChange, id }: { label: string; hint: string; checked: boolean; onChange: (v: boolean) => void; id: string }) {
+  return (
+    <div className="flex min-h-14 items-center justify-between gap-4">
+      <span>
+        <span id={`${id}-l`} className="block font-bold">{label}</span>
+        <span id={`${id}-h`} className="block text-ink-soft">{hint}</span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-labelledby={`${id}-l`}
+        aria-describedby={`${id}-h`}
+        onClick={() => onChange(!checked)}
+        className={cn('relative inline-flex h-11 w-[84px] shrink-0 cursor-pointer items-center rounded-full border-2 px-1 text-base font-bold transition-colors', checked ? 'justify-end border-ink bg-ink text-on-ink' : 'justify-start border-line/60 bg-sunken text-ink')}
+      >
+        <span aria-hidden="true" className={cn('absolute top-1/2 -translate-y-1/2', checked ? 'left-3' : 'right-3')}>{checked ? 'On' : 'Off'}</span>
+        <span aria-hidden="true" className={cn('size-8 rounded-full', checked ? 'bg-on-ink' : 'bg-ink')} />
+      </button>
+    </div>
+  );
+}
+
+/** Output A / B: change persona and fitness goals (Task 2 T4: select a new persona → confirm). */
+function PersonaSection() {
+  const { user, iteration, updateProfile } = useUser();
+  const toast = useToast();
+  const p = user.profile;
+  const [exp, setExp] = useState<ExperienceId[]>([p.experience]);
+  const [goals, setGoals] = useState<FitnessGoal[]>(p.fitnessGoals);
+  const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const changed = exp[0] !== p.experience || goals.join() !== p.fitnessGoals.join();
+  const preview = buildExperience({ ...p, experience: exp[0], dashboard: null }, iteration);
+  const goalOptions = (Object.keys(GOAL_LABEL) as FitnessGoal[]).filter((g) => g !== 'sleep-better' || iteration.sleep);
+  return (
+    <Card aria-labelledby="ps-title" className="lg:col-span-2">
+      <SectionHeader id="ps-title" title="Persona and goals" subtitle="Your persona decides your dashboard and how much detail you see." />
+      <div className="flex flex-col gap-6">
+        <ChoiceCards name="persona" legend="Persona" legendClassName="text-lg" value={exp} onChange={setExp} choices={iteration.experiences.map((e) => ({ value: e, label: `${EXPERIENCE_INFO[e].name}: ${EXPERIENCE_INFO[e].tagline}`, description: EXPERIENCE_INFO[e].description }))} />
+        <div className="flex flex-col gap-2">
+          <span className="text-lg font-bold">Fitness goals</span>
+          <ChipGroup label="Fitness goals" multiple value={goals} onChange={(v) => (setGoals(v), setError(null))} options={goalOptions.map((g) => ({ value: g, label: GOAL_LABEL[g].label }))} />
+        </div>
+        {error && <FieldError>{error}</FieldError>}
+        <Button disabled={!changed} onClick={() => (goals.length ? setConfirm(true) : setError('Choose at least one fitness goal.'))}>
+          Save persona
+        </Button>
+        {!changed && <p className="m-0 -mt-3 text-ink-soft">Change something above to save.</p>}
+      </div>
+      <ConfirmDialog
+        open={confirm}
+        title={`Change your persona to ${preview.name}?`}
+        confirmLabel="Yes, change it"
+        onCancel={() => setConfirm(false)}
+        onConfirm={() => {
+          updateProfile({ experience: exp[0], fitnessGoals: goals, ...(exp[0] !== p.experience ? { dashboard: null } : {}) });
+          toast('success', `Persona updated to ${preview.name}. Your dashboard has changed.`);
+          setConfirm(false);
+        }}
+      >
+        <p className="m-0">Your dashboard will show:</p>
+        <ul className="m-0 mt-2 pl-5">
+          {preview.modules.map((m) => (
+            <li key={m}>{MODULE_INFO[m].name}</li>
+          ))}
+        </ul>
+        {exp[0] !== p.experience && <p className="m-0 mt-3">Your daily goals and pinned metrics will be reset to the {preview.name} defaults.</p>}
+      </ConfirmDialog>
+    </Card>
+  );
+}
+
+/** Output A (Task 2 Output A: "Going into application settings to pin preferred metrics"). */
+function PinSection() {
+  const { user, experience, setDashboard } = useUser();
+  const toast = useToast();
+  const pinned = dashboardModules(user.profile, experience);
+  const others = experience.pinnable.filter((m) => !pinned.includes(m));
+  const save = (next: ModuleId[], text: string) => (setDashboard(next), toast('success', text));
+  const move = (i: number, d: -1 | 1) => {
+    const next = [...pinned];
+    [next[i], next[i + d]] = [next[i + d], next[i]];
+    save(next, `${MODULE_INFO[pinned[i]].name} moved to position ${i + d + 1} of ${pinned.length}.`);
+  };
+  return (
+    <Card aria-labelledby="pin-title" className="lg:col-span-2">
+      <SectionHeader id="pin-title" title="Dashboard metrics" subtitle="Pin the metrics you want on your dashboard, in the order you like." />
+      <h3 className="m-0 mb-2 text-lg font-bold">Pinned</h3>
+      {pinned.length === 0 && <p className="m-0 mb-3 text-ink-soft">No metric is pinned.</p>}
+      <ol className="m-0 grid list-none gap-2 p-0">
+        {pinned.map((m, i) => (
+          <li key={m} className="inset flex flex-wrap items-center gap-2 p-3">
+            <CategoryBadge category={MODULE_INFO[m].category} size={36} />
+            <span className="min-w-0 flex-1 font-bold">
+              {i + 1}. {MODULE_INFO[m].name}
+            </span>
+            <span className="flex gap-2">
+              <Button variant="secondary" size="icon" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move ${MODULE_INFO[m].name} up`}>
+                <ArrowUp aria-hidden="true" />
+              </Button>
+              <Button variant="secondary" size="icon" disabled={i === pinned.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${MODULE_INFO[m].name} down`}>
+                <ArrowDown aria-hidden="true" />
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => save(pinned.filter((x) => x !== m), `${MODULE_INFO[m].name} unpinned.`)} aria-label={`Unpin metric: ${MODULE_INFO[m].name}`}>
+                <PinOff aria-hidden="true" /> Unpin metric
+              </Button>
+            </span>
+          </li>
+        ))}
+      </ol>
+      {others.length > 0 && (
+        <>
+          <h3 className="m-0 mb-2 mt-5 text-lg font-bold">Not pinned</h3>
+          <ul className="m-0 grid list-none gap-2 p-0">
+            {others.map((m) => (
+              <li key={m} className="inset flex items-center gap-3 p-3">
+                <CategoryBadge category={MODULE_INFO[m].category} size={36} />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold">{MODULE_INFO[m].name}</span>
+                  <span className="block text-ink-soft">{MODULE_INFO[m].description}</span>
+                </span>
+                <Button size="sm" onClick={() => save([...pinned, m], `${MODULE_INFO[m].name} pinned to your dashboard.`)} aria-label={`Pin metric: ${MODULE_INFO[m].name}`}>
+                  <Pin aria-hidden="true" /> Pin metric
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <Button variant="outline" block className="mt-4" onClick={() => (setDashboard(null), toast('success', 'Dashboard metrics reset to the recommended order.'))}>
+        Reset to recommended
+      </Button>
+    </Card>
+  );
+}
+
+/** "Show more data" (answer to the Task 2 question, changeable later) + Output C accessibility mode. */
+function ViewSection() {
+  const { user, iteration, updateProfile } = useUser();
+  const toast = useToast();
+  const p = user.profile;
+  return (
+    <Card aria-labelledby="vw-title">
+      <SectionHeader id="vw-title" title="Display" />
+      <div className="flex flex-col gap-4">
+        <Toggle id="more" label="Show more data" hint={p.experience === 'performance' ? 'Performance already shows the most detail.' : 'More detail on the dashboard and pages.'} checked={!!p.moreData} onChange={(v) => (updateProfile({ moreData: v, dashboard: null }), toast('success', v ? 'More data is now shown.' : 'Simple view restored.'))} />
+        {iteration.largeTextMode && (
+          <Toggle id="large" label="Large text and buttons" hint="Accessibility mode: bigger text, bigger controls, bold labels." checked={!!p.largeText} onChange={(v) => (updateProfile({ largeText: v }), toast('success', v ? 'Large text mode is on.' : 'Large text mode is off.'))} />
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -84,7 +247,7 @@ function PersonalSection() {
 }
 
 function ExperienceSection() {
-  const { user, updateProfile } = useUser();
+  const { user, updateProfile, iteration } = useUser();
   const toast = useToast();
   const p = user.profile;
   const [exp, setExp] = useState<ExperienceId[]>([p.experience]);
@@ -92,10 +255,11 @@ function ExperienceSection() {
   const [sessions, setSessions] = useState(p.sessionsPerWeek);
   const [days, setDays] = useState<string[]>(p.trainingDays.map(String));
   const [interests, setInterests] = useState<MetricId[]>(p.interests);
+  const [goals, setGoals] = useState<FitnessGoal[]>(p.fitnessGoals);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
-  const changed = exp[0] !== p.experience || level[0] !== p.level || sessions !== p.sessionsPerWeek || days.join() !== p.trainingDays.join() || interests.join() !== p.interests.join();
-  const preview = buildExperience({ ...p, experience: exp[0], interests: interests.length ? interests : p.interests });
+  const changed = exp[0] !== p.experience || level[0] !== p.level || sessions !== p.sessionsPerWeek || days.join() !== p.trainingDays.join() || interests.join() !== p.interests.join() || goals.join() !== p.fitnessGoals.join();
+  const preview = buildExperience({ ...p, experience: exp[0], interests: interests.length ? interests : p.interests, dashboard: null }, iteration);
 
   const onSessions = (n: number) => {
     setSessions(n);
@@ -106,6 +270,7 @@ function ExperienceSection() {
   };
   const save = () => {
     if (!interests.length) return setError('Choose at least one type of data.');
+    if (!goals.length) return setError('Choose at least one fitness goal.');
     if (days.length !== sessions) return setError(`Choose exactly ${sessions} training day${sessions === 1 ? '' : 's'} (you chose ${days.length}).`);
     setError(null);
     setConfirm(true);
@@ -113,14 +278,14 @@ function ExperienceSection() {
 
   return (
     <Card aria-labelledby="ex-title" className="lg:col-span-2">
-      <SectionHeader id="ex-title" title="Your experience" subtitle="Changes the dashboard, the tabs and how much detail you see." />
+      <SectionHeader id="ex-title" title="Persona and lifestyle" subtitle="Your habits changed? Update them here: the dashboard, tabs and detail follow." />
       <div className="flex flex-col gap-6">
         <ChoiceCards name="exp" legend="What brings you here?" legendClassName="text-lg" value={exp} onChange={setExp} choices={(['casual', 'training', 'performance'] as ExperienceId[]).map((e) => ({ value: e, label: `${EXPERIENCE_INFO[e].name}: ${EXPERIENCE_INFO[e].tagline}`, description: EXPERIENCE_INFO[e].description }))} />
         <div className="flex flex-col gap-2">
           <span className="text-lg font-bold">Level</span>
           <ChipGroup label="Level" value={level} onChange={setLevel} options={(['sedentary', 'beginner', 'regular', 'athlete'] as Level[]).map((l) => ({ value: l, label: LEVEL_LABEL[l] }))} />
         </div>
-        <Stepper label="Sessions per week" value={sessions} onChange={onSessions} min={0} max={7} />
+        <Stepper label="Workouts per week" value={sessions} onChange={onSessions} min={0} max={7} />
         {sessions > 0 && (
           <div className="flex flex-col gap-2">
             <span className="text-lg font-bold">Training days</span>
@@ -128,21 +293,25 @@ function ExperienceSection() {
             <ChipGroup label="Training days" multiple value={days} onChange={setDays} options={DAY_SHORT.map((d, i) => ({ value: String(i), label: d }))} />
           </div>
         )}
-        <ChoiceCards name="int" multiple legend="Data that matters to you" legendClassName="text-lg" value={interests} onChange={setInterests} columns={1} choices={[{ value: 'fitness', label: 'Training and activity' }, { value: 'nutrition', label: 'Nutrition' }, { value: 'sleep', label: 'Sleep' }]} />
+        <div className="flex flex-col gap-2">
+          <span className="text-lg font-bold">Fitness goals</span>
+          <ChipGroup label="Fitness goals" multiple value={goals} onChange={setGoals} options={(Object.keys(GOAL_LABEL) as FitnessGoal[]).map((g) => ({ value: g, label: GOAL_LABEL[g].label }))} />
+        </div>
+        <ChoiceCards name="int" multiple legend="What you want to track" legendClassName="text-lg" value={interests} onChange={setInterests} columns={1} choices={[{ value: 'fitness', label: 'Training and activity' }, { value: 'nutrition', label: 'Nutrition' }, { value: 'sleep', label: 'Sleep' }]} />
         {error && <FieldError>{error}</FieldError>}
         <Button onClick={save} disabled={!changed}>
-          Save experience
+          Save persona and lifestyle
         </Button>
         {!changed && <p className="m-0 -mt-3 text-ink-soft">Change something above to save.</p>}
       </div>
       <ConfirmDialog
         open={confirm}
-        title={`Switch to the ${preview.name} experience?`}
+        title={`Update your persona (${preview.name})?`}
         confirmLabel="Yes, apply"
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
-          updateProfile({ experience: exp[0], level: level[0], sessionsPerWeek: sessions, trainingDays: days.map(Number).sort(), interests: (['fitness', 'nutrition', 'sleep'] as MetricId[]).filter((m) => interests.includes(m)) });
-          toast('success', `Experience updated: ${preview.name}, ${sessions} session${sessions === 1 ? '' : 's'} a week. Your dashboard has changed.`);
+          updateProfile({ experience: exp[0], level: level[0], sessionsPerWeek: sessions, trainingDays: days.map(Number).sort(), interests: (['fitness', 'nutrition', 'sleep'] as MetricId[]).filter((m) => interests.includes(m)), fitnessGoals: goals });
+          toast('success', `Persona updated: ${preview.name}, ${sessions} workout${sessions === 1 ? '' : 's'} a week. Your dashboard has changed.`);
           setConfirm(false);
         }}
       >
@@ -152,7 +321,7 @@ function ExperienceSection() {
             <li key={m}>{MODULE_INFO[m].name}</li>
           ))}
         </ul>
-        {exp[0] !== p.experience && <p className="m-0 mt-3">Your daily goals and dashboard layout will be reset to the {preview.name} defaults.</p>}
+        {exp[0] !== p.experience && <p className="m-0 mt-3">Your daily goals and pinned metrics will be reset to the {preview.name} defaults.</p>}
       </ConfirmDialog>
     </Card>
   );
@@ -175,7 +344,7 @@ function GoalsSection() {
   };
   return (
     <Card aria-labelledby="g-title">
-      <SectionHeader id="g-title" title="Daily goals" />
+      <SectionHeader id="g-title" title="Daily goals" subtitle="Your calorie goal appears at the top of the dashboard." />
       <form noValidate onSubmit={submit} className="grid grid-cols-2 gap-3">
         <TextField label="Steps" inputMode="numeric" value={f.steps} onChange={(e) => setF({ ...f, steps: e.target.value })} error={errors.steps} />
         <TextField label="Active min" inputMode="numeric" value={f.active} onChange={(e) => setF({ ...f, active: e.target.value })} error={errors.active} />
@@ -310,13 +479,15 @@ function RatingSection() {
 }
 
 function ToolsSection() {
-  const { failNextSync, setFailNextSync, loadSampleData, resetPrototype, user } = useUser();
+  const { failNextSync, setFailNextSync, loadSampleData, resetPrototype, user, iteration } = useUser();
   const toast = useToast();
   const [confirm, setConfirm] = useState<'sample' | 'reset' | null>(null);
   const empty = user.workouts.length + user.meals.length + user.sleep.length === 0;
   return (
     <Card aria-labelledby="pt-title">
       <SectionHeader id="pt-title" title="Prototype tools" subtitle="For testing only. Not part of the real app." />
+      {iteration.device && (
+        <>
       <div className="flex min-h-14 items-center justify-between gap-4">
         <span>
           <span id="sync-fail-label" className="block font-bold">Simulate a sync failure</span>
@@ -336,6 +507,8 @@ function ToolsSection() {
           <span aria-hidden="true" className={cn('size-8 rounded-full', failNextSync ? 'bg-on-ink' : 'bg-ink')} />
         </button>
       </div>
+        </>
+      )}
       <div className="mt-4 grid gap-2">
         <Button variant="secondary" onClick={() => setConfirm('sample')}>
           {empty ? 'Fill my account with sample data' : 'Replace my data with sample data'}

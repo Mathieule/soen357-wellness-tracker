@@ -6,7 +6,7 @@
  */
 import { addDays, minutesBetween, today, weekdayIndex } from './dates';
 import { defaultTrainingDays, plannedSessionFor } from './program';
-import type { Account, DayActivity, ExperienceId, Goals, Level, Meal, MealType, Profile, SleepSession, SleepStage, UserData, Workout } from './types';
+import type { Account, DayActivity, ExperienceId, FitnessGoal, Goals, Level, Meal, MealType, Profile, SleepSession, SleepStage, UserData, Workout } from './types';
 
 export function rng(seed: number) {
   let a = seed;
@@ -25,10 +25,11 @@ export function uid(prefix = 'id'): string {
 }
 
 /** Default daily goals for an experience and level. */
-export function defaultGoals(experience: ExperienceId, level: Level, weightKg = 70): Goals {
+export function defaultGoals(experience: ExperienceId, level: Level, weightKg = 70, fitnessGoals: FitnessGoal[] = []): Goals {
   const active = { sedentary: 20, beginner: 30, regular: 45, athlete: 60 }[level];
   const steps = { casual: 7000, training: 9000, performance: 11000 }[experience];
-  const calories = { casual: 2100, training: 2400, performance: 2800 }[experience];
+  // Calorie goal: base per persona, adjusted by fitness goals. The user can change it in Profile.
+  const calories = { casual: 2100, training: 2400, performance: 2800 }[experience] + (fitnessGoals.includes('lose-weight') ? -400 : 0) + (fitnessGoals.includes('build-strength') ? 250 : 0);
   const proteinPerKg = { casual: 1.0, training: 1.4, performance: 1.8 }[experience];
   const proteinG = Math.round(weightKg * proteinPerKg);
   const fatG = Math.round((calories * 0.28) / 9);
@@ -108,21 +109,21 @@ interface DemoSpec {
 const DEMOS: DemoSpec[] = [
   {
     account: { email: 'sam@example.com', password: 'Demo1234' },
-    profile: { name: 'Sam Lee', email: 'sam@example.com', age: 46, weightKg: 78, heightCm: 172, experience: 'casual', level: 'beginner', sessionsPerWeek: 2, interests: ['fitness', 'nutrition'] },
+    profile: { name: 'Sam Lee', email: 'sam@example.com', age: 46, weightKg: 78, heightCm: 172, experience: 'casual', level: 'beginner', sessionsPerWeek: 2, interests: ['fitness', 'nutrition'], fitnessGoals: ['stay-healthy'] },
     seed: 11,
     steps: [3500, 9000],
     bedtimes: [22, 24],
   },
   {
     account: { email: 'alex@example.com', password: 'Demo1234' },
-    profile: { name: 'Alex Martin', email: 'alex@example.com', age: 29, weightKg: 72, heightCm: 176, experience: 'training', level: 'regular', sessionsPerWeek: 4, interests: ['fitness', 'nutrition', 'sleep'] },
+    profile: { name: 'Alex Martin', email: 'alex@example.com', age: 29, weightKg: 72, heightCm: 176, experience: 'training', level: 'regular', sessionsPerWeek: 4, interests: ['fitness', 'nutrition', 'sleep'], fitnessGoals: ['build-strength', 'endurance'] },
     seed: 23,
     steps: [6000, 12500],
     bedtimes: [22, 24],
   },
   {
     account: { email: 'jordan@example.com', password: 'Demo1234' },
-    profile: { name: 'Jordan Rivera', email: 'jordan@example.com', age: 24, weightKg: 66, heightCm: 180, experience: 'performance', level: 'athlete', sessionsPerWeek: 6, interests: ['fitness', 'sleep', 'nutrition'] },
+    profile: { name: 'Jordan Rivera', email: 'jordan@example.com', age: 24, weightKg: 66, heightCm: 180, experience: 'performance', level: 'athlete', sessionsPerWeek: 6, interests: ['fitness', 'sleep', 'nutrition'], fitnessGoals: ['endurance', 'sleep-better'] },
     seed: 37,
     steps: [8500, 16000],
     bedtimes: [21, 23],
@@ -132,7 +133,7 @@ const DEMOS: DemoSpec[] = [
 export const DEMO_ACCOUNTS = DEMOS.map((d) => ({ ...d.account, name: d.profile.name, experience: d.profile.experience }));
 
 export function newProfile(p: Omit<Profile, 'goals' | 'trainingDays' | 'dashboard' | 'ratings'>): Profile {
-  return { ...p, trainingDays: defaultTrainingDays(p.sessionsPerWeek), dashboard: null, ratings: [], goals: defaultGoals(p.experience, p.level, p.weightKg) };
+  return { ...p, trainingDays: defaultTrainingDays(p.sessionsPerWeek), dashboard: null, ratings: [], goals: defaultGoals(p.experience, p.level, p.weightKg, p.fitnessGoals) };
 }
 
 /** Sample history for a profile: workouts follow the plan, meals land near the goal. */
@@ -144,7 +145,8 @@ export function sampleHistory(profile: Profile, seed: number, steps: [number, nu
   const meals: Meal[] = [];
   const sleep: SleepSession[] = [];
 
-  for (let i = 0; i <= 62; i++) {
+  // One year of history so week / month / year charts are meaningful.
+  for (let i = 0; i <= 365; i++) {
     const date = addDays(t, -i);
     const wd = weekdayIndex(date);
     // Activity
@@ -159,8 +161,8 @@ export function sampleHistory(profile: Profile, seed: number, steps: [number, nu
       const kpm = p.type === 'Cardio' ? 9 : p.type === 'Strength' ? 6 : 3.5;
       workouts.push({ id: `w-s-${i}`, date, time: `${String(between(r, 6, 19)).padStart(2, '0')}:${r() < 0.5 ? '00' : '30'}`, name: p.title, type: p.type, durationMin: dur, caloriesKcal: Math.round(dur * kpm), intensity: p.intensity, fromPlan: true });
     }
-    // Meals for the last 14 days, near the calorie goal
-    if (i <= 13) {
+    // Meals near the calorie goal
+    {
       const plan = i === 0 ? MEAL_PLAN.slice(0, 2) : MEAL_PLAN;
       let total = 0;
       for (const [mealType, time, options] of plan) {
@@ -173,8 +175,8 @@ export function sampleHistory(profile: Profile, seed: number, steps: [number, nu
       }
       void total;
     }
-    // Sleep for the last 28 nights
-    if (i <= 27) {
+    // Sleep for the last 90 nights
+    if (i <= 89) {
       const bh = between(r, bedtimes[0], bedtimes[1]);
       const bedtime = `${String(bh % 24).padStart(2, '0')}:${r() < 0.5 ? '00' : '30'}`;
       const wakeTime = `0${between(r, 6, 7)}:${r() < 0.5 ? '15' : '45'}`;

@@ -1,36 +1,32 @@
-# Output C – Changelog
+# Output C – Changelog (from Output B)
 
-Output C starts from the archived Output B (`Archive/v1-task3-faithful/Output_B`, git tag `v1-task3-faithful`). Every change below lists the problem it addresses: the A-P*/B-P* IDs come from the archived `design-decisions.md` and `changelog.md`.
+Output C uses the same code base as A and B with the `ITERATIONS.C` settings (`packages/core/src/iteration.ts`).
+- The compliance check against the documents is in [requirements-check.md](requirements-check.md).
+- The first, faithful-to-Task-3 versions are kept in `Archive/v1-task3-faithful`.
 
-## Kept from Output B
-- Back button top-left on section pages (C22).
-- Settings as a top-right button, not in the nav bar.
-- Pin, unpin and reorder on the dashboard.
-- Keyboard focus rules (↑ to nav, focus kept on nav, ← / → on nav).
-- Every Output A function: sign up and log in with all errors, questionnaire, widgets, add workout, workout detail, activity calendar, sleep graph, add/edit sleep, nutrition goals, simulated photo recognition with success and failure, meal detail, profile with confirmations, delete account with "Are you sure?".
+## Changes from B
 
-## Changes
-
-| # | Change | Why | Addresses |
+| # | Change | Source | Why |
 |---|---|---|---|
-| C-01 | New visual identity and design system (`packages/design-system`): surfaces, tinted heroes, type scale, pill buttons, bottom sheets, toasts, charts | v1 looked like a generic student dashboard; the brief asks for a premium, coherent product | Visual brief |
-| C-02 | **Personalization engine** with three experiences (Casual / Training / Performance) driving dashboard, pages, tabs, detail and wording | In v1 the questionnaire barely changed the interface; frequency had no effect | Task 2 concept; user feedback on v1 |
-| C-03 | Questionnaire: 6 steps (name, goal, level, **sessions per week 0–7**, data, preview of your experience) | Sessions per week now builds the weekly plan; the preview makes the result predictable | Task 2 T1 ("fitness goal"); team decision |
-| C-04 | Weekly training plan (days, sessions, exercises), "Log this session" pre-fills the form, progress "n of m done" | Turns the routine (C13) into a real schedule | Task 3 C13; team request |
-| C-05 | Unchosen categories move from the tab bar to a "More" sheet | Interface adapts to what matters to the user | B-P1 context, brief |
-| C-06 | New accounts start **empty**, with a "Get started" checklist and designed empty states on every list | Lets testers see empty states; avoids fake history for new users | A-P9 |
-| C-07 | Edit and delete for workouts, meals and nights (with confirmation) | Error recovery | A-P10 |
-| C-08 | Nutrition: manual entry, **edit the prediction** before saving, "Enter it manually" after a failed recognition | A user whose photo fails can still log food | A-P6, brief |
-| C-09 | History: previous days' meals, workout history grouped by day with type filters and "Show more", month calendar with workout days | Task 2 "browse previous history"; long lists were hard to scan | A-P5, AR7 |
-| C-10 | Charts: steps, training minutes, rolling training load, 7/14-night sleep, calories, hypnogram, stage bar, macro rings, readiness | Task 2 "progress charts"; performance users want trends and comparisons | A-P5 |
-| C-11 | Settings: experience editor with preview, training days, daily goals, **smart device (simulated)**, **rate the app 1–5**, prototype tools | Missing Task 2 main actions | A-P7 |
-| C-12 | Simulated data-sync status with "Retry sync" on failure | Task 2 T2/T3 flows ("check synchronization → retry") | A-P11 |
-| C-13 | Name asked in the questionnaire | Greeting was guessed from the email | A-P12 |
-| C-14 | Sub-page header on two rows (Back / Settings, then title) | Title wrapped between buttons | B-P2 |
-| C-15 | Dashboard modules full width (2 columns only on large screens) | Lonely half-width widget | B-P1 |
-| C-16 | Disabled controls keep full-contrast text | Below 4.5:1 in v1 | A-P8 |
-| C-17 | Quick actions on the dashboard (log workout / add meal / add night) | Fewer steps for frequent entries | Brief |
-| C-18 | Responsive layout with side navigation from 1024 px | Brief: works on larger screens | Brief |
+| C1 | **Pair a smart device (simulated)** in Settings: choose a device, connect (imports 14 days of steps), disconnect | Task 2 changelog B → C | "Smart devices assist the users in tracking their daily habits" |
+| C2 | **Sync the device and show sync status**: chip on the dashboard (checking / up to date / no device / failed), **Retry sync** on failure, Sync now in Settings | Task 2 Output C; Task 2 T2/T3 flows | "Syncing smart device", "Sync device status" |
+| C3 | **Update persona and lifestyle**: Settings editor for persona, level, workouts per week and training days, what to track, fitness goals, with a preview of the new dashboard before confirming | Task 2 changelog B → C | A casual user who now trains seriously can switch, and the app follows |
+| C4 | **Full questionnaire** (lifestyle choices decide the persona): name (+ large text), persona, level, workouts per week (builds the weekly plan), what to track, fitness goals with a live dashboard preview | Task 2 Output C relationships | Persona from habits, not one question |
+| C5 | **Accessibility mode**: large font and interface elements, bold labels (questionnaire step 1 and Settings → Display) | Task 2 Output C | Users with accessibility needs |
+| C6 | Tabs follow "what you want to track"; other categories go under **More** | Task 2 Output C relationships | Interface shows what matters to the user |
+| C7 | **Edit and delete** workouts, meals and sleep logs (with confirmation) | Evaluation of B | Error recovery |
+| C8 | Food fallbacks: **edit the photo prediction** before saving; **enter it manually** after a failed recognition | Task 4 brief §5; evaluation of B | A failed photo no longer blocks logging |
+| C9 | **New accounts start empty** with a "Get started" checklist and designed empty states | Team decision; brief (empty states) | Honest first use; empty states testable |
+| C10 | Fitness Metrics: interactive **history calendar**; workout history filters and "Show more" | Brief (calendar / history interaction) | Long lists are easier to scan |
+| C11 | Prototype tools: simulate a sync failure, load sample data, reset | Testing needs | Reviewers can test error paths |
+
+## Kept from B
+- Sleep metrics with more detail for performance.
+- Three personas.
+- Pin / unpin / order on the dashboard.
+- Settings top-right and the keyboard rules.
+- Recommendations, adaptive "more data?" question, 1–5 rating, quick actions.
+- Everything from A: today's workout and calorie goal at the top, return buttons and labels, enter / view workouts and meals, meal quantity, simulated photo recognition, week / month / year charts, confirmations, green / red feedback.
 
 ## C.1 (after testing)
-See `Final_Testing/fixes-c1.md`. The original Output C is kept as the git tag `output-c`; the C.1 changes are on `main`.
+See `Final_Testing/fixes-c1.md`. Git tags: `output-c` (before), `output-c1` (after the first fixes), `main` (latest).

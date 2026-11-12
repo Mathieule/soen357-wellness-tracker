@@ -1,10 +1,11 @@
 /**
- * Wellness Tracker app (Output C).
+ * Wellness Tracker app (Output A, B or C, chosen by the `iteration` settings).
  * Routes: /auth (C1) → /onboarding (C2) → / dashboard (C4), /fitness (C11),
  * /nutrition (C18), /sleep (C15), /settings (C3).
  */
+import { useEffect } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router';
-import { StoreProvider, useStore } from '@core';
+import { StoreProvider, useStore, type Iteration } from '@core';
 import { ToastProvider } from '@ds';
 import { AuthScreen } from './auth/AuthScreen';
 import { Dashboard } from './dashboard/Dashboard';
@@ -22,10 +23,26 @@ function Guard({ step, children }: { step: 'auth' | 'onboarding' | 'app'; childr
   return <Navigate to={current === 'auth' ? '/auth' : current === 'onboarding' ? '/onboarding' : '/'} replace />;
 }
 
-export function WellnessApp({ storagePrefix }: { storagePrefix: string }) {
+/** Output C accessibility mode: large font and interface elements, bold labels. */
+function LargeTextMode() {
+  const { user, iteration } = useStore();
+  const on = iteration.largeTextMode && !!user?.profile.largeText;
+  useEffect(() => {
+    document.documentElement.classList.toggle('large-ui', on);
+  }, [on]);
+  return null;
+}
+
+function SleepRoute() {
+  const { iteration } = useStore();
+  return iteration.sleep ? <SleepScreen /> : <Navigate to="/" replace />;
+}
+
+export function WellnessApp({ iteration }: { iteration: Iteration }) {
   return (
-    <StoreProvider prefix={storagePrefix}>
+    <StoreProvider iteration={iteration}>
       <ToastProvider>
+        <LargeTextMode />
         <HashRouter>
           <Routes>
             <Route path="/auth" element={<Guard step="auth"><AuthScreen /></Guard>} />
@@ -34,7 +51,7 @@ export function WellnessApp({ storagePrefix }: { storagePrefix: string }) {
               <Route index element={<Dashboard />} />
               <Route path="fitness" element={<FitnessScreen />} />
               <Route path="nutrition" element={<NutritionScreen />} />
-              <Route path="sleep" element={<SleepScreen />} />
+              <Route path="sleep" element={<SleepRoute />} />
               <Route path="settings" element={<SettingsScreen />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

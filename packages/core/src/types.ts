@@ -7,6 +7,9 @@
 /** The three experiences (Task 2 "fitness levels", extended from two to three). */
 export type ExperienceId = 'casual' | 'training' | 'performance';
 
+/** Fitness goals (Task 2: chosen after the persona; at least one). */
+export type FitnessGoal = 'lose-weight' | 'build-strength' | 'endurance' | 'stay-healthy' | 'sleep-better';
+
 /** Fitness level asked in the questionnaire: sets session length and difficulty. */
 export type Level = 'sedentary' | 'beginner' | 'regular' | 'athlete';
 
@@ -23,7 +26,8 @@ export type ModuleId =
   | 'sleep'
   | 'volume'
   | 'load'
-  | 'recovery';
+  | 'recovery'
+  | 'tips';
 
 export interface Goals {
   steps: number;
@@ -61,6 +65,11 @@ export interface Profile {
   trainingDays: number[];
   /** "What data is important to you?" (Task 3 C2). Order = priority. */
   interests: MetricId[];
+  fitnessGoals: FitnessGoal[];
+  /** Answer to "Do you want to see more data?" (undefined = not asked yet). */
+  moreData?: boolean;
+  /** Accessibility mode: large text and controls, bold labels (Output C). */
+  largeText?: boolean;
   /** Pinned dashboard modules in order; null = the experience's default. */
   dashboard: ModuleId[] | null;
   goals: Goals;
@@ -104,6 +113,8 @@ export interface Meal {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  /** Quantity eaten, in servings (Task 2: "items eaten, quantity"). Nutrients are for the whole quantity. */
+  servings?: number;
   source: 'photo' | 'manual';
 }
 
@@ -135,9 +146,11 @@ export interface Account {
 
 /** Questionnaire answers (onboarding). */
 export interface OnboardingAnswers {
-  name: string;
+  name?: string;
   experience: ExperienceId;
-  level: Level;
-  sessionsPerWeek: number;
-  interests: MetricId[];
+  level?: Level;
+  sessionsPerWeek?: number;
+  interests?: MetricId[];
+  fitnessGoals: FitnessGoal[];
+  largeText?: boolean;
 }

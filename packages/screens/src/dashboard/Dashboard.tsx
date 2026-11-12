@@ -1,17 +1,21 @@
 /**
  * C4 Dashboard (T2: find today's information; T3: pin and reorder metrics).
- *  - Header: date, greeting, data-sync status (simulated, with Retry), Settings.
- *  - Quick actions for the user's categories (log workout / meal / night).
- *  - Modules chosen by the personalization engine, or the user's own pins.
- *  - "Customize": move up / down, remove, add modules, reset to recommended.
- * Keyboard: focus starts on the first module title (unless the page was
- * opened from the nav bar); ↓ / ↑ move between module titles; ↓ on the last
- * one goes to the navigation bar.
+ *  - Header: date, greeting, Settings button (B/C), data-sync status (C).
+ *  - "Do you want to see more data?" (Task 2, Responding): A asks casual users
+ *    from the start; B/C ask when the logged data shows more activity.
+ *  - Quick actions (B/C) and "Get started" for empty accounts (C).
+ *  - Modules chosen by the personalization engine, or the user's pins. The
+ *    first module is today's workout with the day's calorie goal (Task 2).
+ *  - B/C: "Customize" on the dashboard: Move up / down, "Unpin metric",
+ *    "Pin metric", reset. Output A pins metrics in Profile instead.
+ * Keyboard: focus starts on the first module title (unless opened from the
+ * nav bar in B/C); ↓ / ↑ move between module titles; ↓ on the last one goes
+ * to the navigation bar.
  */
-import { ArrowDown, ArrowUp, Check, Loader2, Moon, Plus, RefreshCw, RotateCcw, Settings, SlidersHorizontal, Soup, Dumbbell, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, Dumbbell, Loader2, Moon, Pin, PinOff, RefreshCw, RotateCcw, Settings, SlidersHorizontal, Soup } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router';
-import { dashboardModules, formatLongDay, MODULE_INFO, today, useUser, type MetricId, type ModuleId, type PlanDay } from '@core';
+import { addDays, dashboardModules, formatLongDay, MODULE_INFO, shouldAskMoreData, today, useUser, type MetricId, type ModuleId, type PlanDay } from '@core';
 import { Button, CategoryBadge, InlineStatus, SectionHeader, useToast } from '@ds';
 import { WorkoutSheet, type WorkoutDraft } from '../fitness/WorkoutSheets';
 import { focusCurrentNavItem } from '../lib/focus';
@@ -21,7 +25,7 @@ import { GetStarted } from './GetStarted';
 import { MODULES } from './Modules';
 
 export function Dashboard() {
-  const { user, experience, sync, syncNow, setDashboard } = useUser();
+  const { user, experience, iteration, sync, syncNow, setDashboard } = useUser();
   const toast = useToast();
   const location = useLocation();
   const [editing, setEditing] = useState(false);
@@ -33,10 +37,11 @@ export function Dashboard() {
   const [refocus, setRefocus] = useState<string | null>(null);
   const modules = dashboardModules(user.profile, experience);
   const addable = experience.pinnable.filter((m) => !modules.includes(m));
+  const canCustomize = iteration.pinning === 'dashboard';
 
-  // Initial focus (Task 3 C4 / Output B rule).
   useEffect(() => {
-    if ((location.state as { via?: string } | null)?.via !== 'nav') listRef.current?.querySelector<HTMLElement>('[data-module-link]')?.focus();
+    const via = (location.state as { via?: string } | null)?.via;
+    if (!(iteration.keyboardRules && via === 'nav')) listRef.current?.querySelector<HTMLElement>('[data-module-link]')?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
@@ -70,7 +75,7 @@ export function Dashboard() {
   const quick: Record<MetricId, { label: string; Icon: typeof Dumbbell; run: () => void }> = {
     fitness: { label: 'Log workout', Icon: Dumbbell, run: () => setWorkout({ open: true, draft: null }) },
     nutrition: { label: 'Add meal', Icon: Soup, run: () => setPhoto(true) },
-    sleep: { label: 'Add night', Icon: Moon, run: () => setNight(true) },
+    sleep: { label: 'Add sleep log', Icon: Moon, run: () => setNight(true) },
   };
   const first = user.profile.name.split(' ')[0];
 
@@ -80,14 +85,16 @@ export function Dashboard() {
         <div className="min-w-0">
           <p className="m-0 text-ink-soft">{formatLongDay(today())}</p>
           <h1 className="m-0 mt-1 text-3xl font-bold tracking-tight">Hello, {first}</h1>
-          <SyncChip />
+          {iteration.device && <SyncChip />}
         </div>
-        <Link to="/settings" className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 text-ink no-underline hover:bg-surface-hi lg:hidden" data-settings-button>
-          <Settings aria-hidden="true" className="size-5" /> Settings
-        </Link>
+        {!iteration.settingsInNav && (
+          <Link to="/settings" className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full bg-surface px-4 text-ink no-underline hover:bg-surface-hi lg:hidden" data-settings-button>
+            <Settings aria-hidden="true" className="size-5" /> Settings
+          </Link>
+        )}
       </header>
 
-      {sync.state === 'failed' && (
+      {iteration.device && sync.state === 'failed' && (
         <InlineStatus
           kind="error"
           className="mt-4"
@@ -101,34 +108,42 @@ export function Dashboard() {
         </InlineStatus>
       )}
 
-      <div className={`mt-5 grid gap-2 ${experience.quickActions.length === 3 ? 'grid-cols-3' : experience.quickActions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'} lg:max-w-[560px]`} role="group" aria-label="Quick actions">
-        {experience.quickActions.map((c) => {
-          const q = quick[c];
-          return (
-            <button key={c} type="button" onClick={q.run} className={`flex cursor-pointer items-center justify-center gap-2 rounded-[20px] bg-surface px-2 py-3 text-center text-base text-ink transition-[background-color,transform] duration-150 hover:bg-surface-hi active:scale-[0.97] ${experience.quickActions.length === 1 ? 'min-h-16 flex-row' : 'min-h-[88px] flex-col'}`}>
-              <CategoryBadge category={c} size={40} />
-              <span>{q.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <MoreDataPrompt />
 
-      <GetStarted onWorkout={() => setWorkout({ open: true, draft: null })} onMeal={() => setPhoto(true)} onNight={() => setNight(true)} />
+      {iteration.quickActions && (
+        <div className={`mt-5 grid gap-2 ${experience.quickActions.length === 3 ? 'grid-cols-3' : experience.quickActions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'} lg:max-w-[560px]`} role="group" aria-label="Quick actions">
+          {experience.quickActions.map((c) => {
+            const q = quick[c];
+            return (
+              <button key={c} type="button" onClick={q.run} className={`flex cursor-pointer items-center justify-center gap-2 rounded-[20px] bg-surface px-2 py-3 text-center text-base text-ink transition-[background-color,transform] duration-150 hover:bg-surface-hi active:scale-[0.97] ${experience.quickActions.length === 1 ? 'min-h-16 flex-row' : 'min-h-[88px] flex-col'}`}>
+                <CategoryBadge category={c} size={40} />
+                <span>{q.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {iteration.emptyAccounts && <GetStarted onWorkout={() => setWorkout({ open: true, draft: null })} onMeal={() => setPhoto(true)} onNight={() => setNight(true)} />}
 
       <div className="mt-6">
         <SectionHeader
-          title={editing ? 'Customize your dashboard' : 'Today'}
-          subtitle={editing ? 'Move, remove or add modules. Changes are saved right away.' : `${experience.name} view`}
+          title={editing ? 'Pin and order your metrics' : 'Today'}
+          subtitle={editing ? 'Changes are saved right away.' : `${experience.name} view`}
           action={
-            <Button data-customize variant={editing ? 'primary' : 'secondary'} size="sm" aria-pressed={editing} onClick={() => setEditing(!editing)}>
-              {editing ? <Check aria-hidden="true" /> : <SlidersHorizontal aria-hidden="true" />}
-              {editing ? 'Done' : 'Customize'}
-            </Button>
+            canCustomize ? (
+              <Button data-customize variant={editing ? 'primary' : 'secondary'} size="sm" aria-pressed={editing} onClick={() => setEditing(!editing)}>
+                {editing ? <Check aria-hidden="true" /> : <SlidersHorizontal aria-hidden="true" />}
+                {editing ? 'Done' : 'Customize'}
+              </Button>
+            ) : (
+              <Link to="/settings" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface-hi px-4 text-ink no-underline">
+                <Pin aria-hidden="true" className="size-5" /> Pin metrics
+              </Link>
+            )
           }
         />
-        {modules.length === 0 && (
-          <InlineStatus kind="info">Your dashboard is empty. Add modules below, or reset to the recommended layout.</InlineStatus>
-        )}
+        {modules.length === 0 && <InlineStatus kind="info">No metric is pinned. {canCustomize ? 'Pin metrics below, or reset to the recommended layout.' : 'Pin metrics in Profile.'}</InlineStatus>}
         <div ref={listRef} onKeyDown={onKey} className="grid gap-4 lg:grid-cols-2">
           {modules.map((m, i) => (
             <div key={m} className={`${i === 0 || m.endsWith('Hero') ? 'lg:col-span-2' : ''} ${editing ? 'rounded-[26px] border-2 border-dashed border-line/60 p-2' : ''}`}>
@@ -141,8 +156,8 @@ export function Dashboard() {
                   <Button variant="secondary" size="sm" data-arrange={`${m}-down`} disabled={i === modules.length - 1} onClick={() => move(i, 1)} aria-label={`Move ${MODULE_INFO[m].name} down`}>
                     <ArrowDown aria-hidden="true" /> Down
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={() => (setRefocus('customize'), save(modules.filter((x) => x !== m), `${MODULE_INFO[m].name} removed from your dashboard.`))} aria-label={`Remove ${MODULE_INFO[m].name}`}>
-                    <X aria-hidden="true" /> Remove
+                  <Button variant="secondary" size="sm" className="px-2" onClick={() => (setRefocus('customize'), save(modules.filter((x) => x !== m), `${MODULE_INFO[m].name} unpinned.`))} aria-label={`Unpin metric: ${MODULE_INFO[m].name}`}>
+                    <PinOff aria-hidden="true" /> Unpin
                   </Button>
                 </div>
               )}
@@ -152,9 +167,9 @@ export function Dashboard() {
 
         {editing && (
           <section aria-labelledby="add-mod" className="mt-6">
-            <SectionHeader id="add-mod" title="Add to dashboard" level={3} />
+            <SectionHeader id="add-mod" title="Metrics you can pin" level={3} />
             {addable.length === 0 ? (
-              <p className="m-0 text-ink-soft">Every module is already on your dashboard.</p>
+              <p className="m-0 text-ink-soft">Every metric is already pinned.</p>
             ) : (
               <ul className="m-0 grid list-none gap-2 p-0">
                 {addable.map((m) => (
@@ -164,8 +179,8 @@ export function Dashboard() {
                       <span className="block font-bold">{MODULE_INFO[m].name}</span>
                       <span className="block text-ink-soft">{MODULE_INFO[m].description}</span>
                     </span>
-                    <Button size="sm" onClick={() => (setRefocus('customize'), save([...modules, m], `${MODULE_INFO[m].name} added to your dashboard.`))} aria-label={`Add ${MODULE_INFO[m].name}`}>
-                      <Plus aria-hidden="true" /> Add
+                    <Button size="sm" onClick={() => (setRefocus('customize'), save([...modules, m], `${MODULE_INFO[m].name} pinned to your dashboard.`))} aria-label={`Pin metric: ${MODULE_INFO[m].name}`}>
+                      <Pin aria-hidden="true" /> Pin metric
                     </Button>
                   </li>
                 ))}
@@ -181,8 +196,32 @@ export function Dashboard() {
       <WorkoutSheet open={workout.open} draft={workout.draft} onOpenChange={(o) => setWorkout({ open: o, draft: o ? workout.draft : null })} />
       <PhotoSheet open={photo} onOpenChange={setPhoto} onManual={(d) => setMeal({ open: true, draft: d ?? null })} />
       <MealSheet open={meal.open} draft={meal.draft} onOpenChange={(o) => setMeal({ open: o, draft: o ? meal.draft : null })} />
-      <SleepSheet open={night} edit={null} onOpenChange={setNight} />
+      {iteration.sleep && <SleepSheet open={night} edit={null} onOpenChange={setNight} />}
     </>
+  );
+}
+
+/** Task 2 "Responding": the app asks if the user wants to be presented with more data. */
+function MoreDataPrompt() {
+  const { user, iteration, updateProfile } = useUser();
+  const toast = useToast();
+  const q = shouldAskMoreData(user, iteration, today(), (n) => addDays(today(), -n));
+  if (!q.ask) return null;
+  return (
+    <section aria-labelledby="more-data" className="hero-sleep anim-rise mt-5 p-5">
+      <h2 id="more-data" className="m-0 text-xl font-bold">
+        Do you want to see more data?
+      </h2>
+      <p className="m-0 mt-1">{q.reason} We can show more detail: weekly plan, activity numbers and macros.</p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button variant="secondary" onClick={() => (updateProfile({ moreData: false }), toast('success', 'OK, your dashboard stays simple. You can change this in Settings.'))}>
+          No, thanks
+        </Button>
+        <Button onClick={() => (updateProfile({ moreData: true, dashboard: null }), toast('success', 'More data is now shown on your dashboard and pages.'))}>
+          Yes, show more
+        </Button>
+      </div>
+    </section>
   );
 }
 

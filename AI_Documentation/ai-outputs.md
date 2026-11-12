@@ -35,3 +35,14 @@ Design choices made by the AI that the team should review are listed in `Output_
 | Testing | `tools/checks/run-tests.mjs`, `Final_Testing/` | 38 automated checks, two runs, C.1 log |
 
 Choices made by the AI that the team should review: three experiences instead of two (documented departure from Task 2); readiness formula; module lists per experience; the app name "Wellness Tracker".
+
+## Response to P9 (A and B from the Task 2 document; C compliance)
+
+| Area | Files | Notes |
+|---|---|---|
+| Iteration settings | `packages/core/src/iteration.ts` | One code base; A, B and C select their features |
+| Engine changes | `packages/core/src/experience.ts`, `metrics.ts`, `sample.ts`, `store.tsx` | Version-aware modules and nav; fitness goals; "more data" question (start vs adaptive); week / month / year series; recommendations; a year of sample history |
+| Screens | `packages/screens/**` | Task 2 questionnaire rules (auto-advance, Create after a goal); today's workout + calorie goal at the top; "Return", "Pin metric", "Unpin metric"; page labels "… Metrics"; pin in Profile (A); meal quantity; accessibility mode (C); progress charts |
+| Apps | `Output_A/hi-fi/app`, `Output_B/hi-fi/app`, `Output_C/prototype` | Thin entries |
+| Docs | `Output_A/*`, `Output_B/*`, `Output_C/requirements-check.md`, updated C docs, root README | |
+| Gaps found in C and fixed | see `Output_C/requirements-check.md` | Week/month/year charts, more-data question, recommendations module, accessibility mode, labels, dashboard top, questionnaire rules, meal quantity |

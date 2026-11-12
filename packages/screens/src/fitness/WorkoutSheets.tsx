@@ -102,7 +102,7 @@ export function WorkoutSheet({ open, onOpenChange, draft }: { open: boolean; onO
 }
 
 export function WorkoutDetailSheet({ workout, onClose, onEdit }: { workout: Workout | null; onClose: () => void; onEdit: (w: Workout) => void }) {
-  const { deleteWorkout } = useUser();
+  const { deleteWorkout, iteration } = useUser();
   const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   return (
@@ -113,7 +113,8 @@ export function WorkoutDetailSheet({ workout, onClose, onEdit }: { workout: Work
         title={workout?.name ?? ''}
         description={workout ? `${formatLongDay(workout.date)} at ${workout.time}` : undefined}
         footer={
-          workout && (
+          workout &&
+          (iteration.editDelete ? (
             <>
               <Button variant="secondary" onClick={() => setConfirm(true)}>
                 <Trash2 aria-hidden="true" /> Delete
@@ -122,7 +123,11 @@ export function WorkoutDetailSheet({ workout, onClose, onEdit }: { workout: Work
                 <Pencil aria-hidden="true" /> Edit
               </Button>
             </>
-          )
+          ) : (
+            <Button variant="secondary" onClick={onClose}>
+              Return
+            </Button>
+          ))
         }
       >
         {workout && (

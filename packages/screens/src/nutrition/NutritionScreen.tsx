@@ -7,10 +7,11 @@
  */
 import { Camera, PencilLine, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { addDays, dayLabel, formatLongDay, lastDays, mealsOn, relativeDay, today, totals, useUser, weekPlan, type Meal, type MealType } from '@core';
-import { BarsChart, Button, Card, CATEGORY, EmptyState, ListGroup, ListRow, ProgressRing, SectionHeader } from '@ds';
+import { addDays, mealsOn, relativeDay, today, totals, useUser, weekPlan, type Meal, type MealType } from '@core';
+import { Button, Card, CATEGORY, EmptyState, ListGroup, ListRow, ProgressRing, SectionHeader } from '@ds';
 import { TopBar } from '../layout/TopBar';
-import { arrowUpToNav, useInitialFocus } from '../lib/focus';
+import { useMainAction } from '../lib/focus';
+import { ProgressChart } from '../lib/ProgressChart';
 import { DaySheet, MealDetailSheet, MealSheet, MEAL_TYPES, PhotoSheet, type MealDraft } from './MealSheets';
 
 const ACCENT = CATEGORY.nutrition.accent;
@@ -22,7 +23,7 @@ export function NutritionScreen() {
   const [manual, setManual] = useState<{ open: boolean; draft: MealDraft | null }>({ open: false, draft: null });
   const [detail, setDetail] = useState<Meal | null>(null);
   const [day, setDay] = useState<string | null>(null);
-  useInitialFocus(addRef);
+  const mainKeys = useMainAction(addRef);
   const openManual = (draft?: MealDraft) => setManual({ open: true, draft: draft ?? null });
   const t = totals(mealsOn(user));
   const g = user.profile.goals;
@@ -32,20 +33,15 @@ export function NutritionScreen() {
     macros: <Macros key="m" />,
     fuel: <Fuel key="f" />,
     meals: <Meals key="ml" onOpen={setDetail} onAdd={(mt) => openManual({ mealType: mt })} />,
-    week: user.meals.length ? (
-      <Card key="w" aria-labelledby="nw-title">
-        <SectionHeader id="nw-title" title="Calories, last 7 days" />
-        <BarsChart points={lastDays(7).map((d, i, a) => ({ label: dayLabel(d), longLabel: formatLongDay(d), value: totals(mealsOn(user, d)).calories, state: i === a.length - 1 ? 'today' : undefined }))} accent={ACCENT} unit="kcal" title="Calories eaten per day, last 7 days" goal={g.calories} />
-      </Card>
-    ) : null,
+    progress: <ProgressChart key="w" kind="calories" title="Calorie intake" category="nutrition" goal={{ week: g.calories, month: g.calories, year: g.calories }} yearNote="Average per day, per month" />,
     history: <History key="h" onDay={setDay} />,
   };
 
   return (
     <>
-      <TopBar title="Nutrition" category="nutrition" subtitle={`${Math.max(0, g.calories - t.calories).toLocaleString('en-CA')} kcal left today`} />
+      <TopBar title="Nutrition Metrics" category="nutrition" subtitle={`${Math.max(0, g.calories - t.calories).toLocaleString('en-CA')} kcal left today`} />
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <Button ref={addRef} onKeyDown={arrowUpToNav} variant="nutrition" size="lg" onClick={() => setPhoto(true)}>
+        <Button ref={addRef} onKeyDown={mainKeys} variant="nutrition" size="lg" onClick={() => setPhoto(true)}>
           <Camera aria-hidden="true" /> Scan photo
         </Button>
         <Button variant="secondary" size="lg" onClick={() => openManual()}>
@@ -181,7 +177,7 @@ function Meals({ onOpen, onAdd }: { onOpen: (m: Meal) => void; onAdd: (t: MealTy
                 <ul className="m-0 list-none divide-y divide-hair border-t border-hair p-0">
                   {items.map((m) => (
                     <li key={m.id}>
-                      <ListRow title={m.name} meta={`${m.time} · ${m.calories} kcal${m.source === 'photo' ? ' · from photo' : ''}`} onClick={() => onOpen(m)} />
+                      <ListRow title={m.name} meta={`${m.time} · ${m.servings && m.servings !== 1 ? `${m.servings} servings · ` : ''}${m.calories} kcal${m.source === 'photo' ? ' · from photo' : ''}`} onClick={() => onOpen(m)} />
                     </li>
                   ))}
                 </ul>
@@ -205,7 +201,7 @@ function History({ onDay }: { onDay: (d: string) => void }) {
   const days = Array.from({ length: 13 }, (_, i) => addDays(today(), -(i + 1))).filter((d) => user.meals.some((m) => m.date === d));
   return (
     <section aria-labelledby="nh-title" className="lg:col-span-2">
-      <SectionHeader id="nh-title" title="Previous days" />
+      <SectionHeader id="nh-title" title="Previous meals" subtitle="Tap a day to see its meals." />
       {days.length === 0 ? (
         <EmptyState category="nutrition" title="No history yet">Meals from previous days will appear here.</EmptyState>
       ) : (

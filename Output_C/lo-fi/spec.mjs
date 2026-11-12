@@ -10,14 +10,14 @@ const half = (W - 44) / 2;
 const third = (W - 48) / 3;
 const NAV_ALL = [
   { label: 'Home', to: 'Dashboard' },
-  { label: 'Training', to: 'Training' },
-  { label: 'Nutrition', to: 'Nutrition' },
-  { label: 'Sleep', to: 'Sleep' },
+  { label: 'Fitness', to: 'Fitness Metrics' },
+  { label: 'Nutrition', to: 'Nutrition Metrics' },
+  { label: 'Sleep', to: 'Sleep Metrics' },
 ];
 const NAV_CASUAL = [
   { label: 'Home', to: 'Dashboard' },
-  { label: 'Activity', to: 'Activity' },
-  { label: 'Nutrition', to: 'Nutrition' },
+  { label: 'Fitness', to: 'Fitness Metrics' },
+  { label: 'Nutrition', to: 'Nutrition Metrics' },
   { label: 'More', to: '"More" sheet (Sleep)' },
 ];
 const header = (name) => [
@@ -28,7 +28,7 @@ const header = (name) => [
 ];
 const quick = (n) =>
   Array.from({ length: n }, (_, i) => btn(16 + i * (third + 8), 130, third, 70, ['Log workout', 'Add meal', 'Add night'][i], { to: ['Workout sheet', 'Photo sheet', 'Sleep sheet'][i] }));
-const pageTop = (title) => [btn(16, 20, 100, 44, '← Home', { to: 'Dashboard' }), btn(W - 126, 20, 110, 44, 'Settings', { to: 'Settings' }), text(76, 112, title, { size: 28, bold: true }), img(16, 82, 48, 48, '')];
+const pageTop = (title) => [btn(16, 20, 100, 44, '← Return', { to: 'Dashboard' }), btn(W - 126, 20, 110, 44, 'Settings', { to: 'Settings' }), text(76, 112, title, { size: 28, bold: true }), img(16, 82, 48, 48, '')];
 
 const screens = [
   {
@@ -50,11 +50,11 @@ const screens = [
   },
   {
     id: 'C-L02',
-    name: 'Questionnaire · goal (sets the experience)',
+    name: 'Questionnaire · persona (auto-advance on tap)',
     elements: [
       text(16, 40, 'Set up · 2 of 6', { size: 14 }),
       box(16, 52, full, 8, '', { fill: '#999' }),
-      text(16, 110, 'What brings you here?', { size: 26, bold: true }),
+      text(16, 110, 'Which describes you best?', { size: 26, bold: true }),
       text(16, 140, 'This shapes your dashboard.', { size: 14 }),
       choice(16, 170, full, 'Stay active, keep it simple → Casual', { note: 'One answer; focus starts on first answer' }),
       choice(16, 238, full, 'Organize my training → Training', { checked: true }),
@@ -80,13 +80,13 @@ const screens = [
   },
   {
     id: 'C-L04',
-    name: 'Questionnaire · preview of "your experience"',
+    name: 'Questionnaire · fitness goals + dashboard preview',
     elements: [
-      text(16, 90, 'Your experience: Training', { size: 24, bold: true }),
+      text(16, 90, 'What are your fitness goals?', { size: 24, bold: true }),
       box(16, 120, full, 260, 'Your dashboard will show', { lines: ["1 Today's session", '2 This week', '3 Training volume', '4 Recovery', '5 Nutrition · 6 Sleep'], note: 'Built by the personalization engine' }),
       box(16, 395, full, 110, 'Your plan', { lines: ['4 sessions · Regular level', 'Tabs: Home, Training, Nutrition, Sleep'] }),
       text(16, 540, 'Account starts empty.', { size: 14 }),
-      btn(140, 760, full - 124, 56, 'Create my dashboard', { primary: true, to: 'Dashboard (empty account)' }),
+      btn(140, 760, full - 124, 56, 'Create my dashboard', { primary: true, to: 'Dashboard (empty account)', note: 'Only appears once ≥ 1 goal is chosen' }),
     ],
   },
   {
@@ -141,7 +141,7 @@ const screens = [
       box(16, 100, full, 150, "Today's session", { dashed: true }),
       btn(24, 200, third - 4, 40, '↑ Up (off)'),
       btn(24 + third + 4, 200, third - 4, 40, '↓ Down', { note: 'Move one place; focus stays on the button' }),
-      btn(24 + 2 * third + 8, 200, third - 8, 40, 'Remove'),
+      btn(24 + 2 * third + 8, 200, third - 8, 40, 'Unpin'),
       box(16, 265, full, 130, 'This week', { dashed: true }),
       text(16, 440, 'Add to dashboard', { bold: true }),
       list(16, 450, full, 3, '', { note: 'Modules allowed for this experience' }),
@@ -151,10 +151,10 @@ const screens = [
   },
   {
     id: 'C-L09',
-    name: 'Training page (Training experience)',
+    name: 'Fitness Metrics (Training persona)',
     elements: [
-      ...pageTop('Training'),
-      btn(16, 150, full, 56, '+ Add workout', { primary: true, to: 'Workout sheet', note: 'Focus here from a widget; ↑ → nav bar' }),
+      ...pageTop('Fitness Metrics'),
+      btn(16, 150, full, 56, '+ Enter a new workout', { primary: true, to: 'Workout sheet', note: 'Focus here from a widget; ↑ → nav bar' }),
       box(16, 220, full, 260, 'This week', { lines: ['Day strip (select a day)', 'Selected day: session + exercises', '[Log this session]'], to: 'Workout sheet (pre-filled)' }),
       box(16, 494, full, 100, "Today's activity: steps · active · burned"),
       chart(16, 608, full, 140, 'Training minutes per week + goal', {}),
@@ -166,7 +166,7 @@ const screens = [
     id: 'C-L10',
     name: 'Workout sheet · add / edit / log planned',
     elements: [
-      ...pageTop('Training'),
+      ...pageTop('Fitness Metrics'),
       dialog(110, 734, 'Add a workout', [
         input(16, 60, full - 32, 'Workout name'),
         text(16, 150, 'Type: [Strength] [Cardio] [Mobility] [Sport]', { size: 14 }),
@@ -186,8 +186,8 @@ const screens = [
     id: 'C-L11',
     name: 'Sleep page',
     elements: [
-      ...pageTop('Sleep'),
-      btn(16, 150, full, 56, '+ Add or edit a night', { primary: true, to: 'Sleep sheet' }),
+      ...pageTop('Sleep Metrics'),
+      btn(16, 150, full, 56, '+ Enter a new sleep log', { primary: true, to: 'Sleep sheet' }),
       box(16, 220, full, 250, 'Last night (hero)', { lines: ['8 h 45 min · Great night', '23:00 to 07:45'] }),
       chart(32, 300, full - 32, 150, 'Hypnogram: 4 rows (shades of blue)', { note: 'Stage names on the axis; tooltip-free, values in text' }),
       box(16, 484, full, 120, 'Sleep stages: bar + % per stage'),
@@ -200,7 +200,7 @@ const screens = [
     id: 'C-L12',
     name: 'Nutrition page',
     elements: [
-      ...pageTop('Nutrition'),
+      ...pageTop('Nutrition Metrics'),
       btn(16, 150, half, 56, 'Scan photo', { primary: true, to: 'Photo sheet' }),
       btn(28 + half, 150, half, 56, 'Type it in', { to: 'Manual entry sheet' }),
       box(16, 222, full, 170, 'Today (hero)', { lines: ['Ring 1,232 kcal · 1,568 left', 'P · C · F'] }),
@@ -214,7 +214,7 @@ const screens = [
     id: 'C-L13',
     name: 'Photo sheet · prediction / failure (simulated)',
     elements: [
-      ...pageTop('Nutrition'),
+      ...pageTop('Nutrition Metrics'),
       dialog(60, 784, 'Scan your food', [
         img(110, 50, 140, 90, 'photo'),
         text(16, 175, 'We think this is: Salmon, rice and broccoli', { bold: true, max: 40 }),
@@ -235,17 +235,17 @@ const screens = [
     id: 'C-L14',
     name: 'Settings',
     elements: [
-      btn(16, 20, 100, 44, '← Home', { to: 'Dashboard' }),
+      btn(16, 20, 100, 44, '← Return', { to: 'Dashboard' }),
       text(16, 112, 'Settings', { size: 28, bold: true }),
       img(16, 130, 64, 64, 'avatar'),
-      box(16, 210, full, 170, 'Your experience', { lines: ['Casual / Training / Performance', 'Level · sessions · days · data'], to: 'Confirm with preview', note: 'Confirm dialog lists the new dashboard' }),
+      box(16, 210, full, 170, 'Persona and lifestyle', { lines: ['Casual / Training / Performance · goals', 'Level · workouts · days · data'], to: 'Confirm with preview', note: 'Update persona when habits change (C)' }),
       box(16, 392, full, 80, 'Personal information', { to: 'Confirm "Save?"' }),
       box(16, 484, full, 80, 'Daily goals'),
       box(16, 576, full, 80, 'Smart device (simulated)', { to: 'Connect / Sync now / Disconnect' }),
-      box(16, 668, full, 80, 'Rate the app ★★★★★', { note: '1–5 + optional comment' }),
+      box(16, 668, full, 80, 'Display: show more data · LARGE TEXT', { note: 'Accessibility mode: large font, bold labels (C)' }),
       nav(NAV_ALL, ''),
     ],
-    notes: ['Then Prototype tools (simulate sync failure, sample data, reset) and Account (Log out, Delete account → "Are you sure?").'],
+    notes: ['Then Rate the app (1–5), Prototype tools (simulate sync failure, sample data, reset) and Account (Log out, Delete account → "Are you sure?").'],
   },
   {
     id: 'C-L15',
@@ -275,9 +275,9 @@ export default {
       { id: 'cust', label: 'Customize', x: 700, y: 60 },
       { id: 'set', label: 'Settings', x: 700, y: 200 },
       { id: 'more', label: '"More" sheet', x: 700, y: 340 },
-      { id: 'fit', label: 'Training / Activity', x: 230, y: 380 },
-      { id: 'sleep', label: 'Sleep', x: 460, y: 420 },
-      { id: 'nut', label: 'Nutrition', x: 690, y: 480 },
+      { id: 'fit', label: 'Fitness Metrics', x: 230, y: 380 },
+      { id: 'sleep', label: 'Sleep Metrics', x: 460, y: 420 },
+      { id: 'nut', label: 'Nutrition Metrics', x: 690, y: 480 },
       { id: 'fitd', label: 'Workout sheet · detail · calendar', x: 230, y: 560 },
       { id: 'sleepd', label: 'Night sheet · detail', x: 460, y: 600 },
       { id: 'nutd', label: 'Photo · manual · meal · day', x: 690, y: 640 },

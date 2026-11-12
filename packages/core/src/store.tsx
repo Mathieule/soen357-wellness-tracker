@@ -8,6 +8,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { buildExperience, type Experience } from './experience';
+import type { Iteration } from './iteration';
 import { defaultTrainingDays } from './program';
 import { defaultGoals, demoUsers, newProfile, sampleHistory, uid } from './sample';
 import { connectDevice as simConnect, syncNow as simSync } from './sim/device';
@@ -18,6 +19,7 @@ export type Result = { ok: true } | { ok: false; error: string };
 export type SyncState = { state: 'idle' | 'syncing' | 'synced' | 'failed'; at?: string; error?: string };
 
 interface Store {
+  iteration: Iteration;
   session: string | null;
   user: UserData | null;
   experience: Experience | null;
@@ -49,7 +51,8 @@ interface Store {
 
 const Ctx = createContext<Store | null>(null);
 
-export function StoreProvider({ prefix, children }: { prefix: string; children: ReactNode }) {
+export function StoreProvider({ iteration, children }: { iteration: Iteration; children: ReactNode }) {
+  const prefix = iteration.storagePrefix;
   const store = useMemo(() => createStorage(prefix), [prefix]);
   const seed = useMemo(() => demoUsers(), []);
   const [accounts, setAccounts] = useState<Account[]>(() => store.get('accounts', seed.accounts));
@@ -81,7 +84,7 @@ export function StoreProvider({ prefix, children }: { prefix: string; children: 
   );
 
   const user = session ? (users[session] ?? null) : null;
-  const experience = useMemo(() => (user ? buildExperience(user.profile) : null), [user]);
+  const experience = useMemo(() => (user ? buildExperience(user.profile, iteration) : null), [user, iteration]);
 
   const runSync = useCallback(async (): Promise<Result> => {
     setSync({ state: 'syncing' });
@@ -97,13 +100,14 @@ export function StoreProvider({ prefix, children }: { prefix: string; children: 
     }
   }, [failNextSync]);
 
-  // T2 / T3 flows: after log in, check the data synchronization status.
+  // T2 / T3 flows (Output C, with a device): after log in, check the data synchronization status.
   useEffect(() => {
-    if (session && users[session]) void runSync();
+    if (iteration.device && session && users[session]) void runSync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   const value: Store = {
+    iteration,
     session,
     user,
     experience,
@@ -137,9 +141,22 @@ export function StoreProvider({ prefix, children }: { prefix: string; children: 
 
     completeOnboarding(a) {
       if (!session) return;
-      const profile = newProfile({ name: a.name.trim(), email: session, experience: a.experience, level: a.level, sessionsPerWeek: a.sessionsPerWeek, interests: a.interests });
-      // New accounts start EMPTY: no sample history (empty states are designed).
-      saveUsers({ ...usersRef.current, [session]: { profile, workouts: [], activity: [], meals: [], sleep: [] } });
+      // Short questionnaire (A/B) only asks persona + fitness goals: the rest comes from the persona.
+      const byPersona = { casual: { level: 'beginner', sessions: 2 }, training: { level: 'regular', sessions: 4 }, performance: { level: 'athlete', sessions: 5 } } as const;
+      const fromEmail = session.split('@')[0].replace(/[._-]+/g, ' ');
+      const profile = newProfile({
+        name: a.name?.trim() || fromEmail.charAt(0).toUpperCase() + fromEmail.slice(1),
+        email: session,
+        experience: a.experience,
+        level: a.level ?? byPersona[a.experience].level,
+        sessionsPerWeek: a.sessionsPerWeek ?? byPersona[a.experience].sessions,
+        interests: a.interests ?? (iteration.sleep ? ['fitness', 'nutrition', 'sleep'] : ['fitness', 'nutrition']),
+        fitnessGoals: a.fitnessGoals,
+      });
+      profile.largeText = a.largeText;
+      // Output C: new accounts start EMPTY (designed empty states). A/B: sample history so every screen can be explored.
+      const data = iteration.emptyAccounts ? { workouts: [], activity: [], meals: [], sleep: [] } : sampleHistory(profile, 61);
+      saveUsers({ ...usersRef.current, [session]: { profile, ...data } });
     },
 
     updateProfile(changes) {
@@ -148,7 +165,7 @@ export function StoreProvider({ prefix, children }: { prefix: string; children: 
         if (changes.sessionsPerWeek !== undefined && !changes.trainingDays) next.trainingDays = defaultTrainingDays(changes.sessionsPerWeek);
         // A new experience or level gets the matching default goals and dashboard.
         if ((changes.experience && changes.experience !== u.profile.experience) || (changes.level && changes.level !== u.profile.level)) {
-          next.goals = defaultGoals(next.experience, next.level, next.weightKg);
+          next.goals = defaultGoals(next.experience, next.level, next.weightKg, next.fitnessGoals);
           if (changes.experience && changes.experience !== u.profile.experience) next.dashboard = null;
         }
         return { ...u, profile: next };

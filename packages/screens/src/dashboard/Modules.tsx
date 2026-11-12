@@ -9,10 +9,10 @@ import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import {
-  activityOn, formatDuration, lastSleep, loadBalance, mealsOn, MODULE_INFO, nextSession, readiness, stageTotals, today, totals, useUser, weekComparison, weekPlan, weekProgress,
+  activityOn, DAY_LONG, formatDuration, lastSleep, loadBalance, mealsOn, MODULE_INFO, nextSession, readiness, recommendations, stageTotals, today, totals, useUser, weekComparison, weekPlan, weekProgress,
   weeklyLoad, addDays, type ModuleId, type PlanDay,
 } from '@core';
-import { ArcGauge, BarsChart, Button, CATEGORY, Delta, Hypnogram, Pill, ProgressRing, StageBar, TrendChart, WeekStrip, type Category } from '@ds';
+import { ArcGauge, BarsChart, Button, CATEGORY, CategoryBadge, Delta, Hypnogram, Pill, ProgressRing, StageBar, TrendChart, WeekStrip, type Category } from '@ds';
 import { stripDays } from '../fitness/FitnessScreen';
 import { quality } from '../sleep/SleepScreen';
 
@@ -34,6 +34,50 @@ function ModuleCard({ id, hero, children, action, className = '', title }: { id:
       </div>
       {children}
     </section>
+  );
+}
+
+/** Calorie goal for today (set by the user in Profile), shown with today's workout. */
+function CalorieGoalRow() {
+  const { user } = useUser();
+  const eaten = totals(mealsOn(user)).calories;
+  const goal = user.profile.goals.calories;
+  return (
+    <Link to="/nutrition" state={{ via: 'widget' }} className="mt-4 flex min-h-14 items-center gap-3 rounded-2xl bg-sunken px-4 py-2 text-ink no-underline hover:bg-surface-hi">
+      <CategoryBadge category="nutrition" size={36} />
+      <span className="min-w-0 flex-1">
+        <span className="block font-bold">Calorie goal: {goal.toLocaleString('en-CA')} kcal</span>
+        <span className="block text-ink-soft">
+          {eaten.toLocaleString('en-CA')} eaten · {Math.max(0, goal - eaten).toLocaleString('en-CA')} left
+        </span>
+      </span>
+      <ChevronRight aria-hidden="true" className="size-5" />
+    </Link>
+  );
+}
+
+/** Recommendations (Output B/C): rule-based suggestions from the logged data. */
+export function TipsModule() {
+  const { user, iteration } = useUser();
+  const plan = weekPlan(user.profile, user.workouts);
+  const left = plan.filter((d) => d.session && !d.logged.length && !d.isPast).length;
+  const n = nextSession(plan);
+  const tips = recommendations(user, { sleep: iteration.sleep, plannedLeft: left, nextDay: n ? (n.isToday ? 'today' : DAY_LONG[n.dayIndex]) : undefined });
+  return (
+    <ModuleCard id="tips">
+      {tips.length === 0 ? (
+        <p className="m-0">Nothing to suggest right now. Keep logging and suggestions will appear here.</p>
+      ) : (
+        <ul className="m-0 grid list-none gap-3 p-0">
+          {tips.map((t) => (
+            <li key={t.text} className="flex items-start gap-3">
+              <CategoryBadge category={t.category} size={36} />
+              <span className="pt-1.5">{t.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </ModuleCard>
   );
 }
 
@@ -63,7 +107,7 @@ export function SessionHero({ onLog }: { onLog: (d: PlanDay) => void }) {
   const s = n?.session;
   const label = !n ? 'No session planned' : n.isToday ? (experience.id === 'performance' ? 'Key session' : 'Planned for today') : `Next up · ${n.date === addDays(today(), 1) ? 'tomorrow' : new Date(n.date + 'T12:00').toLocaleDateString('en-CA', { weekday: 'long' })}`;
   return (
-    <ModuleCard id="sessionHero" hero={experience.id !== 'performance'} title={n?.isToday ? "Today's session" : 'Next session'}>
+    <ModuleCard id="sessionHero" hero title={n?.isToday ? "Today's workout" : 'Next workout'}>
       <p className="m-0">{label}</p>
       {s ? (
         <>
@@ -82,8 +126,10 @@ export function SessionHero({ onLog }: { onLog: (d: PlanDay) => void }) {
           )}
         </>
       ) : (
-        <p className="m-0 mt-1 text-lg">Rest and move lightly. You can plan sessions in Settings.</p>
+        <p className="m-0 mt-1 text-lg">Rest and move lightly. You can plan workouts in Settings.</p>
       )}
+      {/* Task 2: the top of the dashboard shows today's workout AND the day's calorie goal. */}
+      <CalorieGoalRow />
     </ModuleCard>
   );
 }
@@ -289,4 +335,5 @@ export const MODULES: Record<ModuleId, (p: { onLog: (d: PlanDay) => void }) => R
   volume: () => <VolumeModule />,
   load: () => <LoadModule />,
   recovery: () => <RecoveryModule />,
+  tips: () => <TipsModule />,
 };
