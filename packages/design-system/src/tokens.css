@@ -1,0 +1,138 @@
+/*
+ * Wellness Tracker design tokens ("warm graphite, luminous data").
+ * Shared by Output A, B and C. Tailwind v4 @theme: every token becomes a
+ * utility (bg-surface, text-ink, …).
+ *
+ * Contrast (WCAG 2.x, computed):
+ *   ink #F2F0EF  on ground 9.37 · sunken 12.44 · surface 8.11 · surface-hi 6.93
+ *                on act/food/sleep tints 5.95 / 5.79 / 5.70
+ *                on act/food/sleep deep 7.30 / 5.64 / 6.94
+ *   ink-soft #D9D4D2 (secondary text) ONLY on neutral surfaces:
+ *                ground 7.25 · sunken 9.63 · surface 6.27 · surface-hi 5.36
+ *   on-ink #2F2A2A on ink (filled primary button) 12.44
+ *   accents (marks, icons, never text): act #FF9E94, food #7FD98A, sleep #9CCBFF
+ *                ≥ 4.6 on surface, ≥ 7.1 on sunken, ≥ 3.4 on their tint
+ */
+@theme {
+  --color-ground: #433d3d;
+  --color-sunken: #2f2a2a;
+  --color-surface: #4d4646;
+  --color-surface-hi: #575050;
+  --color-ink: #f2f0ef;
+  --color-ink-soft: #d9d4d2;
+  --color-on-ink: #2f2a2a;
+  --color-line: #bdb5b3;
+  --color-hair: rgb(242 240 239 / 0.13);
+
+  --color-act: #ff9e94;
+  --color-act-deep: #8e2b2b;
+  --color-act-tint: #6d5654;
+  --color-food: #7fd98a;
+  --color-food-deep: #2e6b3a;
+  --color-food-tint: #566052;
+  --color-sleep: #9ccbff;
+  --color-sleep-deep: #2b5288;
+  --color-sleep-tint: #5b5e67;
+  --color-sleep-2: #c9e2ff;
+  --color-sleep-3: #7fb3f0;
+
+  --font-sans: Arial, "Liberation Sans", Helvetica, sans-serif;
+
+  /* Type scale 16 / 18 / 22 / 28 / 36 / 48. Nothing below 16 px (AR2). */
+  --text-xs: 1rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.45;
+  --text-base: 1rem;
+  --text-base--line-height: 1.45;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.25;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.15;
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 1.05;
+  --text-4xl: 3rem;
+  --text-4xl--line-height: 1;
+
+  --radius-field: 12px;
+  --radius-card: 22px;
+  --radius-sheet: 28px;
+
+  --shadow-pop: 0 18px 48px rgb(0 0 0 / 0.45);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+    background: var(--color-ground);
+  }
+  body {
+    margin: 0;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@layer components {
+  /* Three surface roles only: hero (tinted), card, inset. */
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+  }
+  .inset {
+    background: var(--color-sunken);
+    border-radius: 16px;
+  }
+  .hero-act { background: linear-gradient(150deg, var(--color-act-tint) 0%, var(--color-surface) 72%); border-radius: var(--radius-card); }
+  .hero-food { background: linear-gradient(150deg, var(--color-food-tint) 0%, var(--color-surface) 72%); border-radius: var(--radius-card); }
+  .hero-sleep { background: linear-gradient(150deg, var(--color-sleep-tint) 0%, var(--color-surface) 72%); border-radius: var(--radius-card); }
+  .eyebrow {
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* Motion: short, purposeful, removed for reduced motion (AR8). */
+@keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slide-in-right { from { transform: translateX(28px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes slide-in-left { from { transform: translateX(-28px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fill-ring { from { stroke-dashoffset: var(--ring-len); } }
+@keyframes grow-bar { from { transform: scaleY(0); } }
+@keyframes grow-x { from { transform: scaleX(0); } }
+.anim-rise { animation: rise 320ms var(--ease-out) both; }
+.anim-slide-right { animation: slide-in-right 240ms var(--ease-out); }
+.anim-slide-left { animation: slide-in-left 240ms var(--ease-out); }
+.anim-ring { animation: fill-ring 900ms var(--ease-out) both; }
+.anim-bar { transform-origin: bottom; animation: grow-bar 600ms var(--ease-out) both; }
+.anim-grow-x { transform-origin: left; animation: grow-x 700ms var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .anim-slide-right, .anim-slide-left, .anim-ring, .anim-bar, .anim-grow-x { animation: none !important; }
+  * { scroll-behavior: auto !important; }
+}

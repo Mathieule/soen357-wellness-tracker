@@ -26,7 +26,7 @@ if (!output) {
 }
 const root = resolve(output);
 // Output C keeps its app in Output_C/prototype; A and B in Output_X/hi-fi/app.
-const appDir = existsSync(join(root, 'prototype/package.json')) ? join(root, 'prototype') : join(root, 'hi-fi/app');
+const appDir = existsSync(join(root, 'prototype/index.html')) ? join(root, 'prototype') : join(root, 'hi-fi/app');
 const dist = join(appDir, 'dist/index.html');
 if (!existsSync(dist)) {
   console.error(`Build not found: ${dist}. Run the build first.`);
@@ -72,13 +72,14 @@ for (const s of scenarios) {
     await page.goto(appUrl);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    if (s.viewport) await page.setViewportSize(s.viewport);
     await s.run(page, appUrl);
     if (s.fullPage) {
       // A fixed bottom bar would be drawn in the middle of a full-page image:
       // place it after the content instead (capture only, the app is unchanged).
-      await page.addStyleTag({ content: 'nav[aria-label="Main menu"]{position:static!important}' });
+      await page.addStyleTag({ content: 'nav[aria-label="Main menu"]{position:static!important} div[aria-live="polite"].fixed{display:none!important}' });
     }
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(1600); // let animations and the simulated sync finish
     await page.screenshot({ path: join(outDir, `${s.name}.png`), fullPage: !!s.fullPage });
     console.log(`✓ ${s.name}`);
   } catch (err) {
